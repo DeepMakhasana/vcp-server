@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Course {
+  id            Int      @id @default(autoincrement())
+  title         String   @db.VarChar(70)
+  description   String
+  price         Decimal  @default(0.00)
+  image         String
+  highlights    String
+  outcomes      String
+  prerequisites String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  creatorId     Int
+  status        Boolean  @default(false)
+  creator       Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  modules       Module[]
+  reviews       Review[]
+}
+
+model Module {
+  id        Int      @id @default(autoincrement())
+  title     String   @db.VarChar(100)
+  courseId  Int
+  createdAt DateTime @default(now())
+  lessons   Lesson[]
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+}
+
+model Lesson {
+  id       Int     @id @default(autoincrement())
+  title    String  @db.VarChar(100)
+  moduleId Int
+  isVideo  Boolean
+  module   Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  tasks    Task[]
+  video    Video?
+}
+
+model Video {
+  id         Int      @id @default(autoincrement())
+  lessonId   Int      @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  resourceId String   @db.VarChar(100)
+  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id         Int      @id @default(autoincrement())
+  lessonId   Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  resourceId String   @db.VarChar(100)
+  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(70)
+  email     String   @unique @db.VarChar(255)
+  mobile    String   @db.VarChar(10)
+  image     String   @default("https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07mCJ6esXL.jpg")
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isLogin   Boolean
+  reviews   Review[]
+}
+
+model Otp {
+  id    Int    @id @default(autoincrement())
+  email String
+  otp   Int
+}
+
+model Creator {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(70)
+  email     String   @unique @db.VarChar(255)
+  mobile    String   @db.VarChar(10)
+  image     String   @default("https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?size=338&ext=jpg&ga=GA1.1.2008272138.1728172800&semt=ais_hybrid")
+  password  String
+  domain    String   @db.VarChar(255)
+  bio       String
+  role      String   @db.VarChar(70)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  courses   Course[]
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Decimal  @default(5.0)
+  review    String   @db.VarChar(255)
+  courseId  Int
+  userId    Int
+  createdAt DateTime @default(now())
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
