@@ -1,0 +1,49 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout your code
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Install dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # Step 3: Compile TypeScript to JavaScript
+      - name: Compile TypeScript
+        run: npx tsc
+
+      # Step 4: Package the Lambda function (from dist folder)
+      - name: Package Application
+        run: zip -r vcp-dev.zip ./dist/*
+
+      # Step 5: Deploy the Lambda Function
+      - name: Deploy Lambda Function
+        run: |
+            aws lambda update-function-code \
+              --function-name vcp-dev \
+              --zip-file fileb://vcp-dev.zip
+        env:
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            AWS_REGION: ${{ secrets.AWS_REGION }}
+
+      # Step 6: Update Environment Variables
+      - name: Update Environment Variables
+        run: |
+            aws lambda update-function-configuration \
+              --function-name vcp-dev \
+              --environment Variables="{DATABASE_URL=${{ secrets.DATABASE_URL }},JWT_SECRET=${{ secrets.JWT_SECRET }},NODE_ENV=${{ secrets.NODE_ENV }},EMAIL_ADDRESS=${{ secrets.EMAIL_ADDRESS }},EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }},S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }},S3_SECRET_ACCESS_KEY=${{ secrets.S3_SECRET_ACCESS_KEY }}}"
+        env:
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            AWS_REGION: ${{ secrets.AWS_REGION }}
