@@ -37,7 +37,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.get("/", (req, res, next) => {
-    res.json({ message: "Welcome to vcp apis", headers: req.headers });
+    res.json({ message: "Welcome to vcp development apis.", headers: req.headers });
 });
 
 // use root routes
