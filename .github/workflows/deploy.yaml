@@ -24,7 +24,7 @@ jobs:
 
       # Step 4: Package the Lambda function (from dist folder)
       - name: Package Application
-        run: zip -r vcp-dev.zip ./dist/*
+        run: zip -r vcp-dev.zip ./node_modules ./dist/* package.json package-lock.json
 
       # Step 5: Deploy the Lambda Function
       - name: Deploy Lambda Function
