@@ -28,14 +28,23 @@ jobs:
           mv src typescriptSrc
           mv dist/* .
           rmdir dist
-          zip -r vcp-dev.zip ./node_modules ./src index.js package.json package-lock.json
+          zip -r vcp-backend.zip ./node_modules ./prisma ./src index.js package.json package-lock.json
 
-      # Step 5: Deploy the Lambda Function
-      - name: Deploy Lambda Function
+      # Step 5: Upload the deployment package to S3
+      - name: Upload to S3
+        run: |
+          aws s3 cp vcp-backend.zip s3://${{ secrets.S3_BUCKET_NAME }}/vcp-backend.zip
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda Function from S3
         run: |
           aws lambda update-function-code \
-            --function-name devtest \
-            --zip-file fileb://vcp-dev.zip
+            --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} \
+            --s3-bucket ${{ secrets.S3_BUCKET_NAME }} \
+            --s3-key vcp-backend.zip
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
