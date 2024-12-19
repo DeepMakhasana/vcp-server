@@ -24,13 +24,13 @@ jobs:
 
       # Step 4: Package the Lambda function (from dist folder)
       - name: Package Application
-        run: zip -r vcp-dev.zip ./node_modules ./dist/* package.json package-lock.json
+        run: zip -r vcp-dev.zip ./node_modules -j ./dist/* package.json package-lock.json
 
       # Step 5: Deploy the Lambda Function
       - name: Deploy Lambda Function
         run: |
           aws lambda update-function-code \
-            --function-name devtest \
+            --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} \
             --zip-file fileb://vcp-dev.zip
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -41,7 +41,7 @@ jobs:
       - name: Update Environment Variables
         run: |
           aws lambda update-function-configuration \
-            --function-name vcp-dev \
+            --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} \
             --environment Variables="{DATABASE_URL=${{ secrets.DATABASE_URL }},JWT_SECRET=${{ secrets.JWT_SECRET }},NODE_ENV=${{ secrets.NODE_ENV }},EMAIL_ADDRESS=${{ secrets.EMAIL_ADDRESS }},EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }},S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }},S3_SECRET_ACCESS_KEY=${{ secrets.S3_SECRET_ACCESS_KEY }}}"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
