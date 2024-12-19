@@ -37,11 +37,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.get("/api", (req, res, next) => {
-    res.json({ message: "Welcome to VCP API.", headers: req.headers });
+    res.json({ message: "Welcome to Video course platform API.", headers: req.headers });
 });
 
 app.get("/api/health", (req, res, next) => {
-    res.json({ message: "Good health of VCP API.", status: "Ok" });
+    res.json({ message: "Good health of Video course platform API.", status: "Ok" });
 });
 
 // use root routes
