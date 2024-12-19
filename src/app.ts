@@ -36,8 +36,12 @@ app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.get("/", (req, res, next) => {
-    res.json({ message: "Welcome to vcp apis", headers: req.headers });
+app.get("/api", (req, res, next) => {
+    res.json({ message: "Welcome to VCP API.", headers: req.headers });
+});
+
+app.get("/api/health", (req, res, next) => {
+    res.json({ message: "Good health of VCP API.", status: "Ok" });
 });
 
 // use root routes
