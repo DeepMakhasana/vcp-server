@@ -24,7 +24,11 @@ jobs:
 
       # Step 4: Package the Lambda function (from dist folder)
       - name: Package Application
-        run: zip -r vcp-dev.zip ./node_modules -j ./dist/* package.json package-lock.json
+        run: |
+          mv src typescriptSrc
+          mv dist/* .
+          rmdir dist
+          zip -r vcp-dev.zip ./node_modules ./src index.js package.json package-lock.json
 
       # Step 5: Deploy the Lambda Function
       - name: Deploy Lambda Function
