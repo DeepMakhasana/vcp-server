@@ -2,7 +2,7 @@
     "name": "vcp",
     "version": "1.0.0",
     "description": "",
-    "main": "./dist/index.js",
+    "main": "index.js",
     "scripts": {
         "dev": "nodemon index.ts",
         "start": "node ./dist/index.js",
@@ -39,6 +39,7 @@
         "http-errors": "^2.0.0",
         "joi": "^17.13.3",
         "jsonwebtoken": "^9.0.2",
-        "nodemailer": "^6.9.15"
+        "nodemailer": "^6.9.15",
+        "serverless-http": "^3.2.0"
     }
 }

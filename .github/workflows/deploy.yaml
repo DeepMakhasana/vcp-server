@@ -1,0 +1,51 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout your code
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Install dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # Step 3: Compile TypeScript to JavaScript
+      - name: Compile TypeScript
+        run: npx tsc
+
+      # Step 4: Package the Lambda function (from dist folder)
+      - name: Package Application
+        run: |
+          mv src typescriptSrc
+          mv dist/* .
+          rmdir dist
+          zip -r vcp-backend.zip ./node_modules ./prisma ./src index.js package.json package-lock.json
+
+      # Step 5: Upload the deployment package to S3
+      - name: Upload to S3
+        run: |
+          aws s3 cp vcp-backend.zip s3://${{ secrets.S3_BUCKET_NAME }}/vcp-backend.zip
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Lambda Function from S3
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ secrets.AWS_LAMBDA_FUNCTION_NAME }} \
+            --s3-bucket ${{ secrets.S3_BUCKET_NAME }} \
+            --s3-key vcp-backend.zip
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
