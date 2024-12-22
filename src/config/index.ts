@@ -10,8 +10,11 @@ const _config = {
     jwtSecret: process.env.JWT_SECRET,
     email: process.env.EMAIL_ADDRESS,
     emailPassword: process.env.EMAIL_PASSWORD,
-    s3AccessKey: process.env.S3_ACCESS_KEY,
-    s3SecretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+    s3AccessKey: process.env.AWS_S3_ACCESS_KEY,
+    s3SecretAccessKey: process.env.AWS_S3_SECRET_ACCESS_KEY,
+    awsRegion: process.env.AWS_REGION,
+    snsAccessKey: process.env.AWS_SNS_ACCESS_KEY,
+    snsSecretAccessKey: process.env.AWS_SNS_SECRET_ACCESS_KEY,
 };
 
 const config = Object.freeze(_config);

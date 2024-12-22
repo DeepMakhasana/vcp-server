@@ -35,11 +35,17 @@ export interface ICreator extends IUser {
     role: string;
 }
 
+const isEmailVerified = async (email: string) => {
+    return await prisma.verifiedEmail.findFirst({
+        where: {
+            email,
+        },
+    });
+};
+
 export async function registerUser(req: Request, res: Response, next: NextFunction) {
     try {
         const { name, email, password, mobile } = req.body as UserRegisterParameters;
-        // input validation
-        if (!name || !email || !password || !mobile) return next(createHttpError(400, "Enter all inputs correctly."));
 
         // check user is exist or not
         const userExists = await prisma.user.findFirst({
@@ -49,6 +55,10 @@ export async function registerUser(req: Request, res: Response, next: NextFuncti
 
         // hash the password
         const hashedPassword = await hashPassword(password);
+
+        // check user email verification status
+        const isVerified = await isEmailVerified(email);
+        if (!isVerified?.email) return next(createHttpError(400, "Verify email using verification code."));
 
         // insert user in database
         const createNewUser: IUser = await prisma.user.create({
@@ -61,14 +71,14 @@ export async function registerUser(req: Request, res: Response, next: NextFuncti
             },
         });
 
-        if (!createNewUser)
-            return next(createHttpError(400, "some thing want wrong: try again for register your self."));
+        if (!createNewUser?.email)
+            return next(createHttpError(400, "An error occurred. Please try registering again."));
 
         // Remove the password property
         Reflect.deleteProperty(createNewUser, "password");
         // generate the token
         const token = generateToken(createNewUser, "student");
-        res.status(200).json({ user: createNewUser, message: "Register successfully.", token });
+        res.status(200).json({ message: "Register successfully.", token });
     } catch (error: any) {
         console.log(error.message);
         return next(createHttpError(400, "some thing wait wrong in user register."));
@@ -78,8 +88,6 @@ export async function registerUser(req: Request, res: Response, next: NextFuncti
 export async function loginUser(req: Request, res: Response, next: NextFunction) {
     try {
         const { email, password } = req.body as UserRegisterParameters;
-        // input validation
-        if (!email || !password) return next(createHttpError(400, "Enter all inputs correctly."));
 
         // check user is exist or not
         const userExists = await prisma.user.findFirst({
@@ -91,13 +99,13 @@ export async function loginUser(req: Request, res: Response, next: NextFunction)
         const hashedPassword = userExists.password;
         const machPassword = await verifyPassword(password, hashedPassword);
 
-        if (!machPassword) return next(createHttpError(400, "Incorrect password."));
+        if (!machPassword) return next(createHttpError(400, "Incorrect password"));
 
         // Remove the password property
         Reflect.deleteProperty(userExists, "password");
         // generate the token
         const token = generateToken(userExists, "student");
-        res.status(200).json({ user: userExists, message: "Login successfully.", token });
+        res.status(200).json({ message: "Login successfully", token });
     } catch (error: any) {
         console.log(error.message);
         return next(createHttpError(400, "some thing wait wrong in user register."));
@@ -179,14 +187,21 @@ export async function loginCreator(req: Request, res: Response, next: NextFuncti
 export async function sendVerifyUserEmail(req: Request, res: Response, next: NextFunction) {
     try {
         const { email } = req.body;
-        // input validation
-        if (!email) return next(createHttpError(400, "Enter email which you want verify."));
 
         // check user is exist or not
         const creatorExists = await prisma.user.findFirst({
             where: { email },
         });
         if (creatorExists) return next(createHttpError(400, "User email already exists."));
+
+        // check email is already verified or not
+        const isAlreadyVerify = await prisma.verifiedEmail.findFirst({
+            where: { email },
+        });
+        if (isAlreadyVerify?.email) {
+            res.status(200).json({ email: email, message: `Email address already Verified.` });
+            return;
+        }
 
         const otp = generateOTP();
 
@@ -221,7 +236,7 @@ export async function sendVerifyUserEmail(req: Request, res: Response, next: Nex
         const emailSendStatus = await sendVerificationEmail(email, otp);
 
         if (emailSendStatus) {
-            res.status(200).json({ message: `Verification code sended on ${email} address.` });
+            res.status(200).json({ email: email, message: `Verification code sended on ${email} address.` });
         } else {
             return next(createHttpError(400, "some thing wait wrong: verification email not send."));
         }
@@ -234,15 +249,21 @@ export async function sendVerifyUserEmail(req: Request, res: Response, next: Nex
 export async function sendVerifyCreatorEmail(req: Request, res: Response, next: NextFunction) {
     try {
         const { email } = req.body;
-        // input validation
-        if (!email) return next(createHttpError(400, "Enter email which you want verify."));
 
         // check user is exist or not
         const creatorExists = await prisma.creator.findFirst({
             where: { email },
         });
-        console.log(creatorExists);
         if (creatorExists) return next(createHttpError(400, "Creator email already exists."));
+
+        // check email is already verified or not
+        const isAlreadyVerify = await prisma.verifiedEmail.findFirst({
+            where: { email },
+        });
+        if (isAlreadyVerify?.email) {
+            res.status(200).json({ email: email, message: `Email address already Verified.` });
+            return;
+        }
 
         const otp = generateOTP();
 
@@ -290,8 +311,6 @@ export async function sendVerifyCreatorEmail(req: Request, res: Response, next: 
 export async function sendForgotPasswordVerifyCreatorEmail(req: Request, res: Response, next: NextFunction) {
     try {
         const { email } = req.body;
-        // input validation
-        if (!email) return next(createHttpError(400, "Enter email which you want verify."));
 
         // check user is exist or not
         const creatorExists = await prisma.creator.findFirst({
@@ -345,31 +364,40 @@ export async function sendForgotPasswordVerifyCreatorEmail(req: Request, res: Re
 export async function verifyEmailOTP(req: Request, res: Response, next: NextFunction) {
     try {
         const { email, otp } = req.body;
-        // input validation
-        if (!email || !otp) return next(createHttpError(400, "Enter email and OTP which you want verify."));
-        // verify otp
-        const verifyStatus = await prisma.otp.findFirst({
-            where: {
-                email,
-                otp: Number(otp),
-            },
-        });
 
-        if (verifyStatus?.email === email) {
-            // delete otp record
-            await prisma.otp.delete({
+        await prisma.$transaction(async (prismaTransaction) => {
+            // Retrieve the OTP from the database
+            const verifyOtp = await prismaTransaction.otp.findFirst({
                 where: {
-                    id: verifyStatus?.id,
+                    email,
                 },
             });
-            console.log(`${verifyStatus?.email}verified successfully`);
-            res.status(200).json({ message: `Email verify successfully.`, email: verifyStatus?.email });
-        } else {
-            res.status(400).json({ message: `Wrong OTP please try again.` });
-        }
+
+            // Check if the OTP matches
+            if (!verifyOtp || verifyOtp.otp !== Number(otp)) {
+                throw new Error("Wrong verification code (OTP).");
+            }
+
+            // Add the email number to the verified table
+            await prismaTransaction.verifiedEmail.create({
+                data: {
+                    email,
+                },
+            });
+
+            // Delete the used OTP
+            await prismaTransaction.otp.delete({
+                where: {
+                    id: verifyOtp.id,
+                },
+            });
+        });
+
+        // If the transaction succeeds, send a success response
+        res.status(200).json({ message: "OTP verification email successful" });
     } catch (error) {
         console.log(error);
-        return next(createHttpError(400, "some thing wait wrong in creator otp verify."));
+        return next(createHttpError(400, "some thing wait wrong in OTP verify."));
     }
 }
 

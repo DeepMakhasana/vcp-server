@@ -67,7 +67,7 @@ model User {
   id        Int      @id @default(autoincrement())
   name      String   @db.VarChar(70)
   email     String   @unique @db.VarChar(255)
-  mobile    String   @db.VarChar(10)
+  mobile    String   @unique @db.VarChar(10)
   image     String   @default("https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07mCJ6esXL.jpg")
   password  String
   createdAt DateTime @default(now())
@@ -82,14 +82,19 @@ model Otp {
   otp   Int
 }
 
+model VerifiedEmail {
+  id    Int    @id @default(autoincrement())
+  email String @unique
+}
+
 model Creator {
   id        Int      @id @default(autoincrement())
   name      String   @db.VarChar(70)
   email     String   @unique @db.VarChar(255)
-  mobile    String   @db.VarChar(10)
+  mobile    String   @unique @db.VarChar(10)
   image     String   @default("https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?size=338&ext=jpg&ga=GA1.1.2008272138.1728172800&semt=ais_hybrid")
   password  String
-  domain    String   @db.VarChar(255)
+  domain    String   @unique @db.VarChar(255)
   bio       String
   role      String   @db.VarChar(70)
   createdAt DateTime @default(now())
