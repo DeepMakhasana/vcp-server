@@ -56,3 +56,78 @@ export async function getLessonById(req: RequestWithUser, res: Response, next: N
         return next(createHttpError(400, "some thing wait wrong in getting all lessons."));
     }
 }
+
+export async function createLesson(req: RequestWithUser, res: Response, next: NextFunction) {
+    try {
+        const { title, moduleId, isVideo } = req.body;
+
+        // Create the course in the database
+        const lesson = await prisma.lesson.create({
+            data: {
+                title,
+                moduleId,
+                isVideo,
+            },
+        });
+
+        if (!lesson) return next(createHttpError(400, "some thing want wrong: try again for creating lesson."));
+
+        res.status(200).json({ message: "Lesson created successfully.", lesson });
+    } catch (error: any) {
+        console.log(error.message);
+        return next(createHttpError(400, "some thing wait wrong in create lesson."));
+    }
+}
+
+export async function updateLesson(req: RequestWithUser, res: Response, next: NextFunction) {
+    try {
+        const { title, isVideo } = req.body;
+        const { id } = req.params;
+
+        const verifyId = Number(id);
+        // input validation
+        if (!id || !verifyId) return next(createHttpError(400, "Enter lesson-id in api url correctly."));
+
+        // Create the course in the database
+        const lesson = await prisma.lesson.update({
+            where: {
+                id: verifyId,
+            },
+            data: {
+                title,
+                isVideo,
+            },
+        });
+
+        if (!lesson) return next(createHttpError(400, "some thing want wrong: try again for updating lesson."));
+
+        res.status(200).json({ message: "Lesson updated successfully.", lesson });
+    } catch (error: any) {
+        console.log(error.message);
+        return next(createHttpError(400, "some thing wait wrong in update lesson."));
+    }
+}
+
+export async function deleteLesson(req: RequestWithUser, res: Response, next: NextFunction) {
+    try {
+        const { id } = req.params;
+
+        const verifyId = Number(id);
+        // input validation
+        if (!id || !verifyId) return next(createHttpError(400, "Enter lesson-id in api url correctly."));
+
+        // Create the course in the database
+        const lesson = await prisma.lesson.delete({
+            where: {
+                id: verifyId,
+            },
+        });
+
+        if (!lesson) return next(createHttpError(400, "some thing want wrong: try again for deleting lesson."));
+
+        res.status(200).json({ message: "Lesson delete successfully.", lesson });
+    } catch (error: any) {
+        console.log(error.message);
+        return next(error);
+    }
+}

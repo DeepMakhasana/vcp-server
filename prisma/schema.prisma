@@ -21,7 +21,7 @@ model Course {
   updatedAt     DateTime @updatedAt
   creatorId     Int
   status        Boolean  @default(false)
-  creator       Creator  @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creator       Creator  @relation(fields: [creatorId], references: [id])
   modules       Module[]
   reviews       Review[]
 }
@@ -32,7 +32,8 @@ model Module {
   courseId  Int
   createdAt DateTime @default(now())
   lessons   Lesson[]
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id])
+  isPublish Boolean  @default(false)
 }
 
 model Lesson {
@@ -40,7 +41,7 @@ model Lesson {
   title    String  @db.VarChar(100)
   moduleId Int
   isVideo  Boolean
-  module   Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  module   Module  @relation(fields: [moduleId], references: [id])
   tasks    Task[]
   video    Video?
 }
@@ -51,7 +52,7 @@ model Video {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   resourceId String   @db.VarChar(100)
-  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson     Lesson   @relation(fields: [lessonId], references: [id])
 }
 
 model Task {
@@ -60,7 +61,7 @@ model Task {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   resourceId String   @db.VarChar(100)
-  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson     Lesson   @relation(fields: [lessonId], references: [id])
 }
 
 model User {
