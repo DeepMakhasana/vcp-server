@@ -4,36 +4,7 @@ import prisma from "../config/prisma";
 import { hashPassword, verifyPassword } from "../utils/bcrypt";
 import { generateToken } from "../utils/jwt";
 import { generateOTP, sendVerificationEmail } from "../services/email";
-
-interface UserRegisterParameters {
-    name: string;
-    email: string;
-    password: string;
-    mobile: string;
-}
-
-interface CreatorRegisterParameters extends UserRegisterParameters {
-    domain: string;
-    bio: string;
-    role: string;
-}
-
-export interface IUser {
-    id: number;
-    name: string;
-    email: string;
-    password: string;
-    mobile: string;
-    image: string;
-    createdAt: Date;
-    updatedAt: Date;
-}
-
-export interface ICreator extends IUser {
-    domain: string;
-    bio: string;
-    role: string;
-}
+import { CreatorRegisterParameters, ICreator, ILoginParameter, UserRegisterParameters } from "./types";
 
 const isEmailVerified = async (email: string) => {
     return await prisma.verifiedEmail.findFirst({
@@ -61,7 +32,7 @@ export async function registerUser(req: Request, res: Response, next: NextFuncti
         if (!isVerified?.email) return next(createHttpError(400, "Verify email using verification code."));
 
         // insert user in database
-        const createNewUser: IUser = await prisma.user.create({
+        const createNewUser = await prisma.user.create({
             data: {
                 name,
                 email,
@@ -76,8 +47,9 @@ export async function registerUser(req: Request, res: Response, next: NextFuncti
 
         // Remove the password property
         Reflect.deleteProperty(createNewUser, "password");
+        Reflect.deleteProperty(createNewUser, "isLogin");
         // generate the token
-        const token = generateToken(createNewUser, "student");
+        const token = generateToken(createNewUser, ["student"]);
         res.status(200).json({ message: "Register successfully.", token });
     } catch (error: any) {
         console.log(error.message);
@@ -87,7 +59,7 @@ export async function registerUser(req: Request, res: Response, next: NextFuncti
 
 export async function loginUser(req: Request, res: Response, next: NextFunction) {
     try {
-        const { email, password } = req.body as UserRegisterParameters;
+        const { email, password } = req.body as ILoginParameter;
 
         // check user is exist or not
         const userExists = await prisma.user.findFirst({
@@ -103,8 +75,9 @@ export async function loginUser(req: Request, res: Response, next: NextFunction)
 
         // Remove the password property
         Reflect.deleteProperty(userExists, "password");
+        Reflect.deleteProperty(userExists, "isLogin");
         // generate the token
-        const token = generateToken(userExists, "student");
+        const token = generateToken(userExists, ["student"]);
         res.status(200).json({ message: "Login successfully", token });
     } catch (error: any) {
         console.log(error.message);
@@ -129,7 +102,7 @@ export async function registerCreator(req: Request, res: Response, next: NextFun
         const hashedPassword = await hashPassword(password);
 
         // insert user in database
-        const createNewCreator: ICreator = await prisma.creator.create({
+        const createNewCreator = await prisma.creator.create({
             data: {
                 name,
                 email,
@@ -146,8 +119,11 @@ export async function registerCreator(req: Request, res: Response, next: NextFun
 
         // Remove the password property
         Reflect.deleteProperty(createNewCreator, "password");
+        Reflect.deleteProperty(createNewCreator, "domain");
+        Reflect.deleteProperty(createNewCreator, "bio");
+        Reflect.deleteProperty(createNewCreator, "role");
         // generate the token
-        const token = generateToken(createNewCreator, "creator");
+        const token = generateToken(createNewCreator, ["student", "creator"]);
         res.status(200).json({ message: "Register successfully.", token });
     } catch (error: any) {
         console.log(error.message);
@@ -157,7 +133,7 @@ export async function registerCreator(req: Request, res: Response, next: NextFun
 
 export async function loginCreator(req: Request, res: Response, next: NextFunction) {
     try {
-        const { email, password } = req.body as UserRegisterParameters;
+        const { email, password } = req.body as ILoginParameter;
         // input validation
         if (!email || !password) return next(createHttpError(400, "Enter all inputs correctly."));
 
@@ -176,7 +152,7 @@ export async function loginCreator(req: Request, res: Response, next: NextFuncti
         // Remove the password property
         Reflect.deleteProperty(creatorExists, "password");
         // generate the token
-        const token = generateToken(creatorExists, "creator");
+        const token = generateToken(creatorExists, ["student", "creator"]);
         res.status(200).json({ user: creatorExists, message: "Login successfully.", token });
     } catch (error: any) {
         console.log(error.message);

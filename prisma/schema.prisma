@@ -9,21 +9,23 @@ datasource db {
 }
 
 model Course {
-  id            Int      @id @default(autoincrement())
-  title         String   @db.VarChar(70)
+  id            Int        @id @default(autoincrement())
+  slug          String     @default("") @db.VarChar(100)
+  title         String     @db.VarChar(70)
   description   String
-  price         Decimal  @default(0.00)
+  price         Decimal    @default(0.00)
   image         String
   highlights    String
   outcomes      String
   prerequisites String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
   creatorId     Int
-  status        Boolean  @default(false)
-  creator       Creator  @relation(fields: [creatorId], references: [id])
+  status        Boolean    @default(false)
+  creator       Creator    @relation(fields: [creatorId], references: [id])
   modules       Module[]
   reviews       Review[]
+  purchases     Purchase[]
 }
 
 model Module {
@@ -65,16 +67,17 @@ model Task {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String   @db.VarChar(70)
-  email     String   @unique @db.VarChar(255)
-  mobile    String   @unique @db.VarChar(10)
-  image     String   @default("https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07mCJ6esXL.jpg")
+  id        Int        @id @default(autoincrement())
+  name      String     @db.VarChar(70)
+  email     String     @unique @db.VarChar(255)
+  mobile    String     @unique @db.VarChar(10)
+  image     String     @default("https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07mCJ6esXL.jpg")
   password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   isLogin   Boolean
   reviews   Review[]
+  purchases Purchase[]
 }
 
 model Otp {
@@ -112,4 +115,14 @@ model Review {
   createdAt DateTime @default(now())
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Purchase {
+  id        Int      @id @default(autoincrement())
+  courseId  Int
+  userId    Int
+  price     Int
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }

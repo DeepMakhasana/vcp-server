@@ -7,6 +7,8 @@ import config from "./config";
 import authRouter from "./auth/auth.routes";
 import courseRouter from "./dashboard/course/course.routes";
 import s3Router from "./services/s3/s3.routes";
+import publicCourseRouter from "./public/course.routes";
+import purchaseRouter from "./purchase/purchase.routes";
 
 const app = express();
 
@@ -45,8 +47,10 @@ app.get("/api/health", (req, res, next) => {
 });
 
 // use root routes
+app.use("/api/public", publicCourseRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/course", courseRouter);
+app.use("/api/purchase", purchaseRouter);
 app.use("/api/s3", s3Router);
 
 // Global error handler

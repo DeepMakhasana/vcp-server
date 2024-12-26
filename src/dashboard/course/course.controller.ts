@@ -1,4 +1,4 @@
-import { NextFunction, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";
 import prisma from "../../config/prisma";
 import { RequestWithUser } from "../../middlewares/auth.middleware";
@@ -14,16 +14,30 @@ interface Course {
     status: boolean;
 }
 
+function slugify(title: string) {
+    return (
+        title
+            .toLowerCase()
+            .trim()
+            .replace(/[\s]+/g, "-") // Replace spaces with hyphens
+            .replace(/[^a-z0-9-]+/g, "") // Remove special characters
+            .replace(/^-+|-+$/g, "") || "untitled"
+    ); // Remove leading/trailing hyphens, fallback to 'untitled'
+}
+
 export async function createCourse(req: RequestWithUser, res: Response, next: NextFunction) {
     try {
         const { title, description, price, image, highlights, outcomes, prerequisites, status } = req.body as Course;
+
+        const slug = slugify(title);
 
         // Create the course in the database
         const newCourse = await prisma.course.create({
             data: {
                 title,
+                slug,
                 description,
-                price,
+                price: Number(price),
                 image,
                 highlights,
                 outcomes,
@@ -143,5 +157,32 @@ export async function deleteCourse(req: RequestWithUser, res: Response, next: Ne
         console.log(error);
         console.log(error.message);
         return next(error);
+    }
+}
+
+export async function getCourseBySlug(req: Request, res: Response, next: NextFunction) {
+    try {
+        const { slug } = req.params;
+
+        // Get all the courses of creator in the database
+        const course = await prisma.course.findFirst({
+            where: {
+                slug,
+            },
+            select: {
+                id: true,
+                title: true,
+                price: true,
+                image: true,
+            },
+        });
+
+        if (!course)
+            return next(createHttpError(400, "some thing want wrong: try again for getting details of course."));
+
+        res.status(200).json(course);
+    } catch (error: any) {
+        console.log(error.message);
+        return next(createHttpError(400, "some thing wait wrong in getting details of course."));
     }
 }
