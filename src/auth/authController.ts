@@ -35,12 +35,12 @@ class UserController {
         // Remove the password property
         Reflect.deleteProperty(user, "password");
         // generate the token
-        return generateToken(user, this.userType);
+        return generateToken(user, ["student"]);
     }
 
     public async registerUser(req: Request, res: Response, next: NextFunction) {
         try {
-            const { name, email, password, mobile } = req.body;
+            const { name, email, password, mobile, creatorId } = req.body;
 
             // check user is exist or not
             const checkForUserExist = await this.isExist(email, mobile);
@@ -57,6 +57,7 @@ class UserController {
                     mobile,
                     password: hashedPassword,
                     isLogin: true,
+                    creatorId,
                 },
             });
             if (!createUser)
