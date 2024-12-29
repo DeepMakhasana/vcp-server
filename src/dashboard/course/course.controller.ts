@@ -12,6 +12,7 @@ interface Course {
     outcomes: string;
     prerequisites: string;
     status: boolean;
+    duration: number;
 }
 
 function slugify(title: string) {
@@ -27,9 +28,15 @@ function slugify(title: string) {
 
 export async function createCourse(req: RequestWithUser, res: Response, next: NextFunction) {
     try {
-        const { title, description, price, image, highlights, outcomes, prerequisites, status } = req.body as Course;
+        const { title, description, price, image, highlights, outcomes, duration, prerequisites, status } =
+            req.body as Course;
 
         const slug = slugify(title);
+        const creatorId = Number(req?.user?.id);
+        // input validation
+        if (!creatorId) return next(createHttpError(400, "creator-id not able to get."));
+
+        const courseCount = await prisma.course.count({ where: { creatorId } });
 
         // Create the course in the database
         const newCourse = await prisma.course.create({
@@ -37,31 +44,35 @@ export async function createCourse(req: RequestWithUser, res: Response, next: Ne
                 title,
                 slug,
                 description,
-                price: Number(price),
+                price,
                 image,
                 highlights,
                 outcomes,
                 prerequisites,
-                creatorId: req?.user?.id as number,
+                duration,
+                creatorId,
                 status,
+                order: courseCount + 1,
             },
         });
 
         if (!newCourse) return next(createHttpError(400, "some thing want wrong: try again for creating course."));
 
         res.status(200).json({ message: "Course created successfully.", course: newCourse });
-    } catch (error: any) {
-        console.log(error.message);
-        return next(createHttpError(400, "some thing wait wrong in create course."));
+    } catch (error) {
+        return next(error);
     }
 }
 
 export async function updateCourse(req: RequestWithUser, res: Response, next: NextFunction) {
     try {
-        const { title, description, price, image, highlights, outcomes, prerequisites, status } = req.body as Course;
+        const { title, description, price, image, highlights, outcomes, prerequisites, duration, status } =
+            req.body as Course;
         const { id } = req.params;
 
         const courseId = Number(id);
+        // input validation
+        if (!courseId) return next(createHttpError(400, "please course-id provide in url."));
 
         // Create the course in the database
         const updateCourse = await prisma.course.update({
@@ -72,6 +83,7 @@ export async function updateCourse(req: RequestWithUser, res: Response, next: Ne
                 title,
                 description,
                 price,
+                duration,
                 image,
                 highlights,
                 outcomes,
@@ -85,53 +97,7 @@ export async function updateCourse(req: RequestWithUser, res: Response, next: Ne
         res.status(200).json({ message: "Course updated successfully.", course: updateCourse });
     } catch (error: any) {
         console.log(error.message);
-        return next(createHttpError(400, "some thing wait wrong in create course."));
-    }
-}
-
-export async function getAllOwnCourses(req: RequestWithUser, res: Response, next: NextFunction) {
-    try {
-        console.log("run..");
-        let creatorId = req?.user?.id as number;
-
-        // Get all the courses of creator in the database
-        const courses = await prisma.course.findMany({
-            where: {
-                creatorId,
-            },
-            orderBy: {
-                updatedAt: "asc",
-            },
-        });
-
-        if (!courses)
-            return next(createHttpError(400, "some thing want wrong: try again for getting all own courses."));
-
-        res.status(200).json({ courses });
-    } catch (error: any) {
-        console.log(error.message);
-        return next(createHttpError(400, "some thing wait wrong in getting all own courses."));
-    }
-}
-
-export async function getCourse(req: RequestWithUser, res: Response, next: NextFunction) {
-    try {
-        const { id } = req.params;
-        const courseId = Number(id);
-
-        // Get all the courses of creator in the database
-        const course = await prisma.course.findUnique({
-            where: {
-                id: courseId,
-            },
-        });
-
-        if (!course) return next(createHttpError(400, "some thing want wrong: try again for getting course."));
-
-        res.status(200).json({ course });
-    } catch (error: any) {
-        console.log(error.message);
-        return next(createHttpError(400, "some thing wait wrong in getting course."));
+        return next(error);
     }
 }
 
@@ -160,6 +126,76 @@ export async function deleteCourse(req: RequestWithUser, res: Response, next: Ne
     }
 }
 
+export const updateCourseOrder = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+    const { orders } = req.body; // moduleOrders = [{ id: 1, order: 1 }, { id: 2, order: 2 }]
+
+    try {
+        // Use a transaction to perform all updates in one atomic operation
+        await prisma.$transaction(
+            orders.map((course: { id: number; order: number }) =>
+                prisma.course.update({
+                    where: { id: course.id },
+                    data: { order: course.order },
+                })
+            )
+        );
+
+        res.status(200).json({ message: "Course order updated successfully." });
+    } catch (error) {
+        return next(error);
+    }
+};
+
+export async function getAllOwnCourses(req: RequestWithUser, res: Response, next: NextFunction) {
+    try {
+        const creatorId = Number(req?.user?.id);
+        // input validation
+        if (!creatorId) return next(createHttpError(400, "creator-id not able to get."));
+
+        // Get all the courses of creator in the database
+        const courses = await prisma.course.findMany({
+            where: {
+                creatorId,
+            },
+            orderBy: {
+                order: "asc",
+            },
+        });
+
+        if (!courses)
+            return next(createHttpError(400, "some thing want wrong: try again for getting all own courses."));
+
+        res.status(200).json({ courses });
+    } catch (error: any) {
+        console.log(error.message);
+        return next(error);
+    }
+}
+
+export async function getCourse(req: RequestWithUser, res: Response, next: NextFunction) {
+    try {
+        const { id } = req.params;
+        const courseId = Number(id);
+
+        // input validation
+        if (!courseId) return next(createHttpError(400, "please course-id provide in url."));
+
+        // Get all the courses of creator in the database
+        const course = await prisma.course.findUnique({
+            where: {
+                id: courseId,
+            },
+        });
+
+        if (!course) return next(createHttpError(400, "some thing want wrong: try again for getting course."));
+
+        res.status(200).json({ course });
+    } catch (error: any) {
+        console.log(error.message);
+        return next(error);
+    }
+}
+
 export async function getCourseBySlug(req: Request, res: Response, next: NextFunction) {
     try {
         const { slug } = req.params;
@@ -174,6 +210,7 @@ export async function getCourseBySlug(req: Request, res: Response, next: NextFun
                 title: true,
                 price: true,
                 image: true,
+                duration: true,
             },
         });
 
@@ -183,6 +220,54 @@ export async function getCourseBySlug(req: Request, res: Response, next: NextFun
         res.status(200).json(course);
     } catch (error: any) {
         console.log(error.message);
-        return next(createHttpError(400, "some thing wait wrong in getting details of course."));
+        return next(error);
+    }
+}
+
+export async function getLearnCourseBySlug(req: Request, res: Response, next: NextFunction) {
+    try {
+        const { slug, purchaseId } = req.params;
+
+        const verifyPurchaseId = Number(purchaseId);
+        // input validation
+        if (!purchaseId || !verifyPurchaseId)
+            return next(createHttpError(400, "Enter purchase-id in api url correctly."));
+
+        // Get all the courses of creator in the database
+        const course = await prisma.course.findUnique({
+            where: {
+                slug,
+            },
+            select: {
+                id: true,
+                title: true,
+                image: true,
+                duration: true,
+                modules: {
+                    include: {
+                        lessons: {
+                            include: {
+                                public: true,
+                                video: true,
+                                tasks: true,
+                                progresses: {
+                                    where: {
+                                        purchaseId: Number(verifyPurchaseId),
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!course)
+            return next(createHttpError(400, "some thing want wrong: try again for getting details of course."));
+
+        res.status(200).json(course);
+    } catch (error: any) {
+        console.log(error.message);
+        return next(error);
     }
 }

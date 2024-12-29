@@ -4,7 +4,7 @@ import prisma from "../config/prisma";
 import { hashPassword, verifyPassword } from "../utils/bcrypt";
 import { generateToken } from "../utils/jwt";
 import { generateOTP, sendVerificationEmail } from "../services/email";
-import { CreatorRegisterParameters, ICreator, ILoginParameter, UserRegisterParameters } from "./types";
+import { CreatorRegisterParameters, ILoginParameter, UserRegisterParameters } from "./types";
 
 const isEmailVerified = async (email: string) => {
     return await prisma.verifiedEmail.findFirst({
@@ -16,7 +16,7 @@ const isEmailVerified = async (email: string) => {
 
 export async function registerUser(req: Request, res: Response, next: NextFunction) {
     try {
-        const { name, email, password, mobile } = req.body as UserRegisterParameters;
+        const { name, email, password, mobile, creatorId } = req.body as UserRegisterParameters;
 
         // check user is exist or not
         const userExists = await prisma.user.findFirst({
@@ -39,6 +39,7 @@ export async function registerUser(req: Request, res: Response, next: NextFuncti
                 mobile,
                 password: hashedPassword,
                 isLogin: true,
+                creatorId,
             },
         });
 
@@ -79,6 +80,37 @@ export async function loginUser(req: Request, res: Response, next: NextFunction)
         // generate the token
         const token = generateToken(userExists, ["student"]);
         res.status(200).json({ message: "Login successfully", token });
+    } catch (error: any) {
+        console.log(error.message);
+        return next(createHttpError(400, "some thing wait wrong in user register."));
+    }
+}
+
+export async function getCreatorUsers(req: Request, res: Response, next: NextFunction) {
+    try {
+        const { creatorId } = req.params;
+        // Validate lesson ID
+        const verifyId = Number(creatorId);
+        if (!verifyId) return next(createHttpError(400, "creator-id not able to get."));
+
+        // check user is exist or not
+        const users = await prisma.user.findMany({
+            where: {
+                creatorId: verifyId,
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                mobile: true,
+                createdAt: true,
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+        });
+
+        res.status(200).json(users);
     } catch (error: any) {
         console.log(error.message);
         return next(createHttpError(400, "some thing wait wrong in user register."));

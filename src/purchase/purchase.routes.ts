@@ -24,6 +24,12 @@ const purchaseSchema = Joi.object({
         "number.min": "Price must be at least 0.",
         "any.required": "Price is required.",
     }),
+    duration: Joi.number().integer().min(0).required().messages({
+        "number.base": "Duration must be a number.",
+        "number.integer": "Duration must be an integer.",
+        "number.min": "Duration must be at least 0.",
+        "any.required": "Duration is required.",
+    }),
 });
 
 purchaseRouter.post("/", authenticationMiddleware(["student"]), validate(purchaseSchema), purchaseCourse);

@@ -9,7 +9,7 @@ export interface RequestWithUser extends Request {
 
 export const authenticationMiddleware = (allowedRoles: string[]) => {
     return (req: RequestWithUser, res: Response, next: NextFunction) => {
-        console.log(req.header("Authorization"));
+        console.log("Authenticate");
         const token = req.header("Authorization")?.split(" ")[1]; // Expecting "Bearer <token>"
 
         if (!token) {
@@ -20,8 +20,6 @@ export const authenticationMiddleware = (allowedRoles: string[]) => {
             // Verify the token and attach decoded data to `req.user`
             const decoded: TokenType = verifyToken(token);
             req.user = decoded;
-
-            console.log(req.user);
 
             // Check if the user has at least one of the allowed roles
             const roles: string[] = req.user.roles || []; // Assuming `roles` is an array in `UserWithoutPassword`

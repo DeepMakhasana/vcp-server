@@ -3,16 +3,25 @@ export interface UserRegisterParameters {
     email: string;
     password: string;
     mobile: string;
+    creatorId: number;
 }
-export interface CreatorRegisterParameters extends UserRegisterParameters {
+export interface CreatorRegisterParameters {
+    name: string;
+    email: string;
+    password: string;
+    mobile: string;
     domain: string;
     bio: string;
     role: string;
 }
 
-export interface IUser extends UserRegisterParameters {
+export interface IUser {
     id: number;
-    image: string;
+    name: string;
+    email: string;
+    password: string;
+    mobile: string;
+    image: string | null;
     createdAt: Date;
     updatedAt: Date;
 }

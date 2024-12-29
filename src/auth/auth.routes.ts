@@ -1,6 +1,7 @@
 import express from "express";
 import {
     creatorPasswordForget,
+    getCreatorUsers,
     loginCreator,
     loginUser,
     registerCreator,
@@ -24,6 +25,7 @@ const authRouter = express.Router();
 // user auth
 authRouter.post("/user/register", validate(userRegisterSchema), registerUser);
 authRouter.post("/user/login", validate(loginSchema), loginUser);
+authRouter.get("/user/:creatorId", getCreatorUsers);
 // creator auth
 authRouter.post("/creator/register", validate(creatorRegisterSchema), registerCreator);
 authRouter.post("/creator/login", validate(loginSchema), loginCreator);

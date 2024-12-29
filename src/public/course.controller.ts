@@ -20,6 +20,7 @@ export async function getAllCreatorCourses(req: Request, res: Response, next: Ne
                 slug: true,
                 title: true,
                 description: true,
+                duration: true,
                 image: true,
                 creator: {
                     select: {

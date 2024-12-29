@@ -13,11 +13,14 @@ export async function createModule(req: RequestWithUser, res: Response, next: Ne
     try {
         const { title, courseId } = req.body;
 
+        const moduleCount = await prisma.module.count({ where: { courseId } });
+
         // Create the course in the database
         const module = await prisma.module.create({
             data: {
                 title,
                 courseId,
+                order: moduleCount + 1,
             },
         });
 
@@ -52,7 +55,7 @@ export async function getAllCourseModules(req: RequestWithUser, res: Response, n
                 },
             },
             orderBy: {
-                id: "asc",
+                order: "asc",
             },
         });
 
@@ -145,3 +148,24 @@ export async function deleteModule(req: RequestWithUser, res: Response, next: Ne
         return next(error);
     }
 }
+
+export const updateModuleOrder = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+    const { orders } = req.body; // moduleOrders = [{ id: 1, order: 1 }, { id: 2, order: 2 }]
+
+    try {
+        // Use a transaction to perform all updates in one atomic operation
+        await prisma.$transaction(
+            orders.map((module: { id: number; order: number }) =>
+                prisma.module.update({
+                    where: { id: module.id },
+                    data: { order: module.order },
+                })
+            )
+        );
+
+        res.status(200).json({ message: "Module order updated successfully" });
+    } catch (error) {
+        console.error("Error updating module order:", error);
+        return next(error);
+    }
+};

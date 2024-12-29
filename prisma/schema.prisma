@@ -10,11 +10,12 @@ datasource db {
 
 model Course {
   id            Int        @id @default(autoincrement())
-  slug          String     @default("") @db.VarChar(100)
+  slug          String     @unique @db.VarChar(100)
   title         String     @db.VarChar(70)
   description   String
-  price         Decimal    @default(0.00)
+  price         Int
   image         String
+  duration      Int        @default(28)
   highlights    String
   outcomes      String
   prerequisites String
@@ -22,6 +23,7 @@ model Course {
   updatedAt     DateTime   @updatedAt
   creatorId     Int
   status        Boolean    @default(false)
+  order         Int        @default(0)
   creator       Creator    @relation(fields: [creatorId], references: [id])
   modules       Module[]
   reviews       Review[]
@@ -29,23 +31,40 @@ model Course {
 }
 
 model Module {
-  id        Int      @id @default(autoincrement())
-  title     String   @db.VarChar(100)
+  id        Int       @id @default(autoincrement())
+  title     String    @db.VarChar(100)
   courseId  Int
-  createdAt DateTime @default(now())
   lessons   Lesson[]
-  course    Course   @relation(fields: [courseId], references: [id])
-  isPublish Boolean  @default(false)
+  course    Course    @relation(fields: [courseId], references: [id])
+  isPublish Boolean   @default(false)
+  order     Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
 }
 
 model Lesson {
-  id       Int     @id @default(autoincrement())
-  title    String  @db.VarChar(100)
-  moduleId Int
-  isVideo  Boolean
-  module   Module  @relation(fields: [moduleId], references: [id])
-  tasks    Task[]
-  video    Video?
+  id         Int          @id @default(autoincrement())
+  title      String       @db.VarChar(100)
+  moduleId   Int
+  isVideo    Boolean
+  order      Int          @default(0)
+  isPublish  Boolean      @default(false)
+  module     Module       @relation(fields: [moduleId], references: [id])
+  tasks      Task[]
+  video      Video?
+  public     PublicVideo?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime?    @updatedAt
+  progresses Progress[]
+}
+
+model PublicVideo {
+  id        Int      @id @default(autoincrement())
+  lessonId  Int      @unique
+  url       String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Video {
@@ -66,29 +85,43 @@ model Task {
   lesson     Lesson   @relation(fields: [lessonId], references: [id])
 }
 
+model Progress {
+  id         Int      @id @default(autoincrement())
+  purchaseId Int
+  lessonId   Int
+  status     Boolean  @default(true)
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
 model User {
   id        Int        @id @default(autoincrement())
   name      String     @db.VarChar(70)
   email     String     @unique @db.VarChar(255)
   mobile    String     @unique @db.VarChar(10)
-  image     String     @default("https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07mCJ6esXL.jpg")
+  // image     String     @default("https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07mCJ6esXL.jpg")
+  image     String?
   password  String
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   isLogin   Boolean
+  creatorId Int
+  creator   Creator    @relation(fields: [creatorId], references: [id])
   reviews   Review[]
   purchases Purchase[]
 }
 
 model Otp {
-  id    Int    @id @default(autoincrement())
-  email String
-  otp   Int
+  id        Int      @id @default(autoincrement())
+  email     String
+  otp       Int
+  createdAt DateTime @default(now())
 }
 
 model VerifiedEmail {
-  id    Int    @id @default(autoincrement())
-  email String @unique
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  createdAt DateTime @default(now())
 }
 
 model Creator {
@@ -96,7 +129,8 @@ model Creator {
   name      String   @db.VarChar(70)
   email     String   @unique @db.VarChar(255)
   mobile    String   @unique @db.VarChar(10)
-  image     String   @default("https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?size=338&ext=jpg&ga=GA1.1.2008272138.1728172800&semt=ais_hybrid")
+  image     String?
+  // image     String   @default("https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg?size=338&ext=jpg&ga=GA1.1.2008272138.1728172800&semt=ais_hybrid")
   password  String
   domain    String   @unique @db.VarChar(255)
   bio       String
@@ -104,6 +138,7 @@ model Creator {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   courses   Course[]
+  users     User[]
 }
 
 model Review {
@@ -118,11 +153,13 @@ model Review {
 }
 
 model Purchase {
-  id        Int      @id @default(autoincrement())
-  courseId  Int
-  userId    Int
-  price     Int
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id         Int        @id @default(autoincrement())
+  courseId   Int
+  userId     Int
+  price      Int
+  course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime   @default(now())
+  endAt      DateTime?
+  progresses Progress[]
 }

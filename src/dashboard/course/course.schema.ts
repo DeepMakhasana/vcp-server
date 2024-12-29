@@ -12,6 +12,11 @@ export const courseValidationSchema = Joi.object({
         "number.base": "Price must be a valid number.",
         "number.min": "Price cannot be negative.",
     }),
+    duration: Joi.number().integer().min(1).default(28).messages({
+        "number.base": "Duration must be a number.",
+        "number.integer": "Duration must be an integer.",
+        "number.min": "Duration must be at least 1 day.",
+    }),
     image: Joi.string().required().messages({
         "string.empty": "Image is required.",
     }),
@@ -62,4 +67,39 @@ export const lessonSchema = Joi.object({
         "boolean.base": "isVideo must be a boolean value.",
         "any.required": "isVideo is required.",
     }),
+    url: Joi.string().uri().allow(""),
+});
+
+export const slugSchema = Joi.object({
+    slug: Joi.string()
+        .pattern(/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/)
+        .max(100) // Match the max length in your Prisma schema
+        .required()
+        .messages({
+            "string.pattern.base":
+                "Slug must contain only lowercase letters, numbers, hyphens, or underscores, and cannot start or end with a hyphen/underscore.",
+            "string.max": "Slug cannot exceed 100 characters.",
+            "string.empty": "Slug is required.",
+        }),
+});
+
+export const orderSchema = Joi.object({
+    orders: Joi.array()
+        .items(
+            Joi.object({
+                id: Joi.number().integer().positive().required(), // id should be a positive integer
+                order: Joi.number().integer().positive().required(), // order should be a positive integer
+            })
+        )
+        .min(1) // Optional: Ensures the array has at least one item
+        .required() // Ensures the array itself is required
+        .messages({
+            "array.base": "lessonOrders must be an array of objects.",
+            "array.min": "There must be at least one lesson order.",
+            "object.base": "Each lesson must be an object.",
+            "number.base": "id and order must be numbers.",
+            "number.integer": "id and order must be integers.",
+            "number.positive": "id and order must be positive numbers.",
+            "any.required": "Both id and order are required.",
+        }),
 });

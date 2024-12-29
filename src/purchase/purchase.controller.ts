@@ -3,10 +3,24 @@ import createHttpError from "http-errors";
 import prisma from "../config/prisma";
 import { RequestWithUser } from "../middlewares/auth.middleware";
 
+function getCourseEndDateTime(daysToAdd: number, hoursToAdd = 0, minutesToAdd = 0) {
+    // Get the current datetime
+    const currentDateTime = new Date();
+
+    // Add the specified number of days, hours, and minutes
+    currentDateTime.setDate(currentDateTime.getDate() + daysToAdd);
+    currentDateTime.setHours(0);
+    currentDateTime.setMinutes(0);
+
+    // Convert to ISO string (compatible with Prisma's DateTime type)
+    return currentDateTime.toISOString();
+}
+
 export async function purchaseCourse(req: RequestWithUser, res: Response, next: NextFunction) {
     try {
-        const { courseId, price } = req.body;
+        const { courseId, price, duration } = req.body;
         const userId = req.user?.id;
+        const endAt = getCourseEndDateTime(duration);
 
         // Get all the courses of creator in the database
         const purchase = await prisma.purchase.create({
@@ -14,6 +28,7 @@ export async function purchaseCourse(req: RequestWithUser, res: Response, next: 
                 courseId: Number(courseId),
                 price: Number(price),
                 userId: Number(userId),
+                endAt,
             },
         });
 

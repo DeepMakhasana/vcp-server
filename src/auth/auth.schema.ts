@@ -71,6 +71,11 @@ export const userRegisterSchema = Joi.object({
     password: Joi.string().min(8).required().messages({
         "string.min": '"password" must be at least 8 characters long',
     }),
+    creatorId: Joi.number().integer().min(1).default(28).messages({
+        "number.base": "Creator id must be a number.",
+        "number.integer": "Creator id must be an integer.",
+        "number.min": "Invalid creator id.",
+    }),
 });
 
 export const loginSchema = Joi.object({
