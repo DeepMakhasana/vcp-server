@@ -21,7 +21,9 @@ export interface IUser {
     email: string;
     password: string;
     mobile: string;
+    creatorId?: number;
     image: string | null;
+    domain?: string;
     createdAt: Date;
     updatedAt: Date;
 }

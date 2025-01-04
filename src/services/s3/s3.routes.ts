@@ -6,12 +6,14 @@ import {
     putObjectFromS3,
     putVideoContentS3,
 } from "./s3.controller";
+import { authenticationMiddleware } from "../../middlewares/auth.middleware";
 const s3Router = express.Router();
 
 s3Router.post("/putObject", putObjectFromS3);
-s3Router.post("/getObject", getObjectFromS3);
-s3Router.post("/putVideoObjects", putVideoContentS3);
-s3Router.post("/putMultipleObjects", putMultipleObjectToS3);
-s3Router.delete("/deleteObjects", deleteObjectsFromS3);
+s3Router.post("/getObject", authenticationMiddleware(["creator"]), getObjectFromS3);
+s3Router.post("/putMultipleObjects", authenticationMiddleware(["creator"]), putMultipleObjectToS3);
+s3Router.delete("/deleteObjects", authenticationMiddleware(["creator"]), deleteObjectsFromS3);
+
+s3Router.post("/putVideoObjects", authenticationMiddleware(["creator"]), putVideoContentS3);
 
 export default s3Router;

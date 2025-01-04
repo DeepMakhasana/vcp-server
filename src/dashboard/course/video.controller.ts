@@ -17,7 +17,7 @@ export async function createVideo(req: RequestWithUser, res: Response, next: Nex
         // Create the course in the database
         const newVideo = await prisma.video.create({
             data: {
-                resourceId,
+                resourceId: `${req.user?.domain}/${resourceId}`,
                 lessonId: Number(lessonId),
             },
         });

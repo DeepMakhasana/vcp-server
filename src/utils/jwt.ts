@@ -23,7 +23,6 @@ export const verifyToken = (token: string): TokenType => {
             !decoded.email ||
             !decoded.roles ||
             !decoded.name ||
-            !decoded.image ||
             !decoded.mobile ||
             !decoded.createdAt ||
             !decoded.updatedAt

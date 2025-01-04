@@ -10,6 +10,7 @@ import {
     sendVerifyCreatorEmail,
     sendVerifyUserEmail,
     verifyEmailOTP,
+    verifyRegisterOTP,
 } from "./auth.controller";
 import { validate } from "../middlewares/validator.middleware";
 import {
@@ -39,5 +40,6 @@ authRouter.post(
     sendForgotPasswordVerifyCreatorEmail
 );
 authRouter.post("/verify-email-otp", validate(verifyEmailOtpSchema), verifyEmailOTP);
+authRouter.post("/verify-register-otp", validate(verifyEmailOtpSchema), verifyRegisterOTP);
 
 export default authRouter;

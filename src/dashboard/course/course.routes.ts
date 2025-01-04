@@ -5,7 +5,7 @@ import {
     getAllOwnCourses,
     getCourse,
     getCourseBySlug,
-    getLearnCourseBySlug,
+    publishRequest,
     updateCourse,
     updateCourseOrder,
 } from "./course.controller";
@@ -51,10 +51,12 @@ courseRouter.post("/tasks", authenticationMiddleware(["creator"]), createTasks);
 courseRouter.get("/tasks/:lessonId", authenticationMiddleware(["creator"]), getLessonTasks);
 courseRouter.delete("/task/:taskId", authenticationMiddleware(["creator"]), deleteLessonTask);
 
+// public request
+courseRouter.post("/publish", authenticationMiddleware(["creator"]), publishRequest);
+
 // courses
 courseRouter.get("/slug/:slug", authenticationMiddleware(["student"]), validate(slugSchema, "params"), getCourseBySlug);
 courseRouter.get("/own", authenticationMiddleware(["creator"]), getAllOwnCourses);
-courseRouter.get("/learn/:slug/:purchaseId", authenticationMiddleware(["student", "creator"]), getLearnCourseBySlug);
 
 courseRouter.get("/:id", authenticationMiddleware(["creator"]), getCourse);
 courseRouter.post("/", authenticationMiddleware(["creator"]), validate(courseValidationSchema), createCourse);

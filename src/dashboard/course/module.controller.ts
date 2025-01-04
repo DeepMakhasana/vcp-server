@@ -49,6 +49,7 @@ export async function getAllCourseModules(req: RequestWithUser, res: Response, n
             include: {
                 lessons: {
                     include: {
+                        public: true,
                         video: true,
                         tasks: true,
                     },

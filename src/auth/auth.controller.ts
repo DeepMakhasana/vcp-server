@@ -22,13 +22,14 @@ export async function registerUser(req: Request, res: Response, next: NextFuncti
         const userExists = await prisma.user.findFirst({
             where: { OR: [{ email }, { mobile }] },
         });
-        if (userExists) return next(createHttpError(400, "User already exists"));
+        if (userExists) return next(createHttpError(400, "User already exists with this email or mobile number."));
 
         // hash the password
         const hashedPassword = await hashPassword(password);
 
         // check user email verification status
         const isVerified = await isEmailVerified(email);
+        console.log(isVerified, email);
         if (!isVerified?.email) return next(createHttpError(400, "Verify email using verification code."));
 
         // insert user in database
@@ -151,7 +152,6 @@ export async function registerCreator(req: Request, res: Response, next: NextFun
 
         // Remove the password property
         Reflect.deleteProperty(createNewCreator, "password");
-        Reflect.deleteProperty(createNewCreator, "domain");
         Reflect.deleteProperty(createNewCreator, "bio");
         Reflect.deleteProperty(createNewCreator, "role");
         // generate the token
@@ -183,6 +183,8 @@ export async function loginCreator(req: Request, res: Response, next: NextFuncti
 
         // Remove the password property
         Reflect.deleteProperty(creatorExists, "password");
+        Reflect.deleteProperty(creatorExists, "bio");
+        Reflect.deleteProperty(creatorExists, "role");
         // generate the token
         const token = generateToken(creatorExists, ["student", "creator"]);
         res.status(200).json({ user: creatorExists, message: "Login successfully.", token });
@@ -383,13 +385,45 @@ export async function verifyEmailOTP(req: Request, res: Response, next: NextFunc
 
             // Check if the OTP matches
             if (!verifyOtp || verifyOtp.otp !== Number(otp)) {
-                throw new Error("Wrong verification code (OTP).");
+                return next(createHttpError(400, "Wrong verification code (OTP)."));
             }
 
-            // Add the email number to the verified table
+            // Delete the used OTP
+            await prismaTransaction.otp.delete({
+                where: {
+                    id: verifyOtp.id,
+                },
+            });
+        });
+
+        // If the transaction succeeds, send a success response
+        res.status(200).json({ message: "Email verification successfully" });
+    } catch (error) {
+        console.log(error);
+        return next(error);
+    }
+}
+
+export async function verifyRegisterOTP(req: Request, res: Response, next: NextFunction) {
+    try {
+        const { email, otp } = req.body;
+
+        await prisma.$transaction(async (prismaTransaction) => {
+            // Retrieve the OTP from the database
+            const verifyOtp = await prismaTransaction.otp.findFirst({
+                where: {
+                    email,
+                },
+            });
+
+            // Check if the OTP matches
+            if (!verifyOtp || verifyOtp.otp !== Number(otp)) {
+                return next(createHttpError(400, "Wrong verification code (OTP)."));
+            }
+
             await prismaTransaction.verifiedEmail.create({
                 data: {
-                    email,
+                    email: verifyOtp.email,
                 },
             });
 
@@ -402,10 +436,10 @@ export async function verifyEmailOTP(req: Request, res: Response, next: NextFunc
         });
 
         // If the transaction succeeds, send a success response
-        res.status(200).json({ message: "OTP verification email successful" });
+        res.status(200).json({ message: "Email verification successfully" });
     } catch (error) {
         console.log(error);
-        return next(createHttpError(400, "some thing wait wrong in OTP verify."));
+        return next(error);
     }
 }
 

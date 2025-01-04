@@ -23,10 +23,15 @@ const s3Client = new S3Client({
     },
 });
 
-const generatePresignedUrls = async (bucketName: string, folderName: string, fileNames: Array<string>) => {
+const generatePresignedUrls = async (
+    bucketName: string,
+    folderName: string,
+    fileNames: Array<string>,
+    domain: string
+) => {
     return Promise.all(
         fileNames.map(async (fileName) => {
-            const key = `videos/${folderName}/${fileName}`;
+            const key = `videos/${domain}/${folderName}/${fileName}`;
             const command = new PutObjectCommand({
                 Bucket: bucketName,
                 Key: key,
@@ -41,11 +46,13 @@ export async function putVideoContentS3(req: RequestWithUser, res: Response, nex
     console.log("putVideoContentS3 run...");
     try {
         const { fileNames, folderName, bucket } = req.body;
+        const user = req.user;
+
         // input validation
         if (!fileNames || !folderName || !bucket || !Array.isArray(fileNames))
             return next(createHttpError(400, "Enter file name and type correctly."));
 
-        const presignedUrls = await generatePresignedUrls(bucket, folderName, fileNames);
+        const presignedUrls = await generatePresignedUrls(bucket, folderName, fileNames, String(user?.domain));
 
         res.status(200).json({ presignedUrls });
     } catch (error) {
@@ -77,12 +84,13 @@ export async function putObjectFromS3(req: RequestWithUser, res: Response, next:
 
 export async function getObjectFromS3(req: RequestWithUser, res: Response, next: NextFunction) {
     try {
-        const { key } = req.body;
+        const { key, bucket } = req.body;
+        console.log(key, bucket);
         // input validation
         if (!key) return next(createHttpError(400, "Enter file path (key) correctly."));
 
         const command = new GetObjectCommand({
-            Bucket: "vpc-public",
+            Bucket: bucket,
             Key: key,
         });
 

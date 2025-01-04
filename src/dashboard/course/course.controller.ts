@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";
 import prisma from "../../config/prisma";
 import { RequestWithUser } from "../../middlewares/auth.middleware";
+import { sendPublishRequest } from "../../services/email";
 
 interface Course {
     title: string;
@@ -20,6 +21,7 @@ function slugify(title: string) {
         title
             .toLowerCase()
             .trim()
+            .replace(/[\s-]+/g, " ") // Replace spaces or hyphens with a single space
             .replace(/[\s]+/g, "-") // Replace spaces with hyphens
             .replace(/[^a-z0-9-]+/g, "") // Remove special characters
             .replace(/^-+|-+$/g, "") || "untitled"
@@ -200,8 +202,10 @@ export async function getCourseBySlug(req: Request, res: Response, next: NextFun
     try {
         const { slug } = req.params;
 
+        console.log(slug);
+
         // Get all the courses of creator in the database
-        const course = await prisma.course.findFirst({
+        const course = await prisma.course.findUnique({
             where: {
                 slug,
             },
@@ -214,9 +218,6 @@ export async function getCourseBySlug(req: Request, res: Response, next: NextFun
             },
         });
 
-        if (!course)
-            return next(createHttpError(400, "some thing want wrong: try again for getting details of course."));
-
         res.status(200).json(course);
     } catch (error: any) {
         console.log(error.message);
@@ -224,48 +225,22 @@ export async function getCourseBySlug(req: Request, res: Response, next: NextFun
     }
 }
 
-export async function getLearnCourseBySlug(req: Request, res: Response, next: NextFunction) {
+export async function publishRequest(req: RequestWithUser, res: Response, next: NextFunction) {
     try {
-        const { slug, purchaseId } = req.params;
+        if (req.user?.domain) {
+            // send public request
+            const email = await sendPublishRequest(req.user?.domain);
 
-        const verifyPurchaseId = Number(purchaseId);
-        // input validation
-        if (!purchaseId || !verifyPurchaseId)
-            return next(createHttpError(400, "Enter purchase-id in api url correctly."));
-
-        // Get all the courses of creator in the database
-        const course = await prisma.course.findUnique({
-            where: {
-                slug,
-            },
-            select: {
-                id: true,
-                title: true,
-                image: true,
-                duration: true,
-                modules: {
-                    include: {
-                        lessons: {
-                            include: {
-                                public: true,
-                                video: true,
-                                tasks: true,
-                                progresses: {
-                                    where: {
-                                        purchaseId: Number(verifyPurchaseId),
-                                    },
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-        });
-
-        if (!course)
-            return next(createHttpError(400, "some thing want wrong: try again for getting details of course."));
-
-        res.status(200).json(course);
+            if (email) {
+                res.status(200).json({
+                    message: `Public request sended successfully, changes update in 5 to 6 hours.`,
+                });
+            } else {
+                return next(createHttpError(400, "some thing wait wrong: try again for public course."));
+            }
+        } else {
+            return next(createHttpError(400, "try again for public course."));
+        }
     } catch (error: any) {
         console.log(error.message);
         return next(error);

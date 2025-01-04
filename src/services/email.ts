@@ -10,14 +10,13 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendVerificationEmail = async (to: string, token: number): Promise<Boolean> => {
-    const url = `https://yourapp.com/verify?token=${token}`;
     const mailOptions = {
         from: '"vcp" <dep7901@gmail.com>',
         to,
         subject: "Email Verification",
         html: `<div>
         <p>Verification code: ${token}</p>
-        <p>Click <a href="${url}">here</a> to verify your email.</p>
+        <p>verify your email.</p>
         </div>`,
     };
 
@@ -27,6 +26,27 @@ export const sendVerificationEmail = async (to: string, token: number): Promise<
         return true;
     } catch (error) {
         console.error("Error sending verification email:", error);
+        return false;
+    }
+};
+
+export const sendPublishRequest = async (domain: string): Promise<Boolean> => {
+    const mailOptions = {
+        from: '"vcp" <dep7901@gmail.com>',
+        to: "deepmakhasana.dev@gmail.com",
+        subject: "Rebuild new version",
+        html: `<div>
+        <p>Re build the ${domain}</p>
+        <p>Public new changes</p>
+        </div>`,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log("Re build mail send successfully.");
+        return true;
+    } catch (error) {
+        console.error("Error sending Re build email:", error);
         return false;
     }
 };

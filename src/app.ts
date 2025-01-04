@@ -9,6 +9,8 @@ import courseRouter from "./dashboard/course/course.routes";
 import s3Router from "./services/s3/s3.routes";
 import publicCourseRouter from "./public/course.routes";
 import purchaseRouter from "./purchase/purchase.routes";
+import progressRouter from "./dashboard/progress/progress.routes";
+import learnRouter from "./dashboard/learn/learn.routes";
 
 const app = express();
 
@@ -16,6 +18,7 @@ const app = express();
 const allowedOrigins: string[] = [
     config.frontendBaseUrl as string,
     config.creatorFrontendBaseUrl as string,
+    config.learnFrontendBaseUrl as string,
     "http://localhost:4173",
     "http://127.0.0.1",
     "http://0.0.0.0",
@@ -51,6 +54,8 @@ app.use("/api/public", publicCourseRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/course", courseRouter);
 app.use("/api/purchase", purchaseRouter);
+app.use("/api/learn", learnRouter);
+app.use("/api/progress", progressRouter);
 app.use("/api/s3", s3Router);
 
 // Global error handler

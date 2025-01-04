@@ -28,6 +28,9 @@ export async function getAllCreatorCourses(req: Request, res: Response, next: Ne
                     },
                 },
             },
+            orderBy: {
+                order: "asc",
+            },
         });
 
         if (!courses)
@@ -61,7 +64,21 @@ export async function getCourseFullDetail(req: Request, res: Response, next: Nex
                 },
                 modules: {
                     include: {
-                        lessons: true,
+                        lessons: {
+                            include: {
+                                public: {
+                                    select: {
+                                        url: true,
+                                    },
+                                },
+                            },
+                            orderBy: {
+                                order: "asc",
+                            },
+                        },
+                    },
+                    orderBy: {
+                        order: "asc",
                     },
                 },
             },

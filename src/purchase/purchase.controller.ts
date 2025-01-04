@@ -9,8 +9,8 @@ function getCourseEndDateTime(daysToAdd: number, hoursToAdd = 0, minutesToAdd = 
 
     // Add the specified number of days, hours, and minutes
     currentDateTime.setDate(currentDateTime.getDate() + daysToAdd);
-    currentDateTime.setHours(0);
-    currentDateTime.setMinutes(0);
+    // currentDateTime.setHours(0);
+    // currentDateTime.setMinutes(0);
 
     // Convert to ISO string (compatible with Prisma's DateTime type)
     return currentDateTime.toISOString();
@@ -51,7 +51,17 @@ export async function getUserPurchaseCourse(req: RequestWithUser, res: Response,
                 userId: Number(userId),
             },
             include: {
-                course: true,
+                course: {
+                    select: {
+                        id: true,
+                        slug: true,
+                        title: true,
+                        image: true,
+                        duration: true,
+                        createdAt: true,
+                        updatedAt: true,
+                    },
+                },
             },
         });
 
