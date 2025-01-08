@@ -73,7 +73,7 @@ export async function deleteLessonVideo(req: RequestWithUser, res: Response, nex
         if (!deletedVideo)
             return next(createHttpError(400, "some thing want wrong: try again for deleting lesson video."));
 
-        res.status(200).json({ deletedVideo });
+        res.status(200).json({ message: "Video deleted successfully." });
     } catch (error: any) {
         console.log(error.message);
         return next(createHttpError(400, "some thing wait wrong in deleting lesson video."));

@@ -52,6 +52,11 @@ export async function getLessonById(req: RequestWithUser, res: Response, next: N
             where: {
                 id: verifyLessonId,
             },
+            include: {
+                public: true,
+                video: true,
+                tasks: true,
+            },
         });
 
         if (!lesson) return next(createHttpError(400, "some thing want wrong: try again for getting all lessons."));

@@ -89,7 +89,7 @@ export async function deleteLessonTask(req: RequestWithUser, res: Response, next
             }
 
             // If both succeed, return success
-            res.status(200).json({ success: true, deletedTask, message: deleteFromS3.message });
+            res.status(200).json({ task: deletedTask, message: deleteFromS3.message });
         });
     } catch (error: any) {
         console.error("Transaction failed:", error.message);
