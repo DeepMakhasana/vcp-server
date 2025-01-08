@@ -226,7 +226,7 @@ export async function deleteSingleObjectFromS3(
             const command = new DeleteObjectCommand(deleteParams);
             await s3Client.send(command);
 
-            return { success: true, message: `File ${key} deleted successfully.` };
+            return { success: true, message: `File ${key.split(".")[1].split("/")[1]} deleted successfully.` };
         } catch (error) {
             attempt++;
             console.error(`Attempt ${attempt} failed for ${key}:`, error);

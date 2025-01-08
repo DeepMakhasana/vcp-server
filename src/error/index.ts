@@ -22,7 +22,8 @@ const globalErrorHandel = (err: HttpError, req: Request, res: Response, next: Ne
                 break;
             case "P2003": // Foreign key constraint violation
                 statusCode = 400;
-                message = "The provided data is linked to another record and cannot be processed.";
+                message =
+                    "Unable to process your request as the data is linked to an existing record. Please ensure that all dependencies are correctly managed.";
                 break;
             case "P2025": // Record not found
                 statusCode = 404;
@@ -52,7 +53,7 @@ const globalErrorHandel = (err: HttpError, req: Request, res: Response, next: Ne
     console.log("Error global handler: ", err);
     res.status(statusCode).json({
         success: false,
-        message: err.message || message,
+        message: message || err.message,
         errorStack: config.nodeEnv == "development" ? err.stack : "",
     });
     return;
