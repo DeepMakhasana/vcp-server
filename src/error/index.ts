@@ -5,13 +5,18 @@ import { Prisma } from "@prisma/client";
 
 const globalErrorHandel = (err: HttpError, req: Request, res: Response, next: NextFunction) => {
     let statusCode = 500; // Default to internal server error
-    let message = "An unexpected error occurred. Please try again later."; // Generic message for unknown errors
+    let message = ""; // Generic message for unknown errors
     // Handle specific Prisma errors
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
         switch (err.code) {
             case "P2000": // Value too long for a column
                 statusCode = 400;
-                message = "One of the inputs is too long. Please shorten it and try again.";
+                const fieldName = (err.meta?.target as string[] | undefined) || [];
+                message = fieldName
+                    ? `The input for "${fieldName.join(
+                          ", "
+                      )}" exceeds the allowed character limit. Please shorten it and try again.`
+                    : "One of your inputs exceeds the allowed character limit. Please reduce its length and try again.";
                 break;
             case "P2002": // Unique constraint violation
                 statusCode = 400;
@@ -53,7 +58,7 @@ const globalErrorHandel = (err: HttpError, req: Request, res: Response, next: Ne
     console.log("Error global handler: ", err);
     res.status(statusCode).json({
         success: false,
-        message: message || err.message,
+        message: message || err.message || "An unexpected error occurred. Please try again later.",
         errorStack: config.nodeEnv == "development" ? err.stack : "",
     });
     return;

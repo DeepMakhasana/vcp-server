@@ -72,7 +72,16 @@ export async function createLesson(req: RequestWithUser, res: Response, next: Ne
     try {
         const { title, moduleId, isVideo, url } = req.body;
 
-        const lessonCount = await prisma.lesson.count({ where: { moduleId } });
+        const lessonLastOrder = await prisma.lesson.findFirst({
+            where: { moduleId },
+            select: { order: true },
+            orderBy: {
+                order: "desc",
+            },
+            take: 1,
+        });
+
+        const lessonCount = lessonLastOrder?.order || 0;
 
         // Create the course in the database
         const lesson = await prisma.lesson.create({

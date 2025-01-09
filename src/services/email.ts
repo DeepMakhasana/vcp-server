@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import config from "../config";
+import { TokenType } from "../auth/types";
 
 const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -38,6 +39,48 @@ export const sendPublishRequest = async (domain: string): Promise<Boolean> => {
         html: `<div>
         <p>Re build the ${domain}</p>
         <p>Public new changes</p>
+        </div>`,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log("Re build mail send successfully.");
+        return true;
+    } catch (error) {
+        console.error("Error sending Re build email:", error);
+        return false;
+    }
+};
+
+export const sendCourseCompletionRequest = async (
+    userDetail: TokenType | undefined,
+    courseDetail: any,
+    creatorEmail: string | undefined
+): Promise<Boolean> => {
+    console.log("send email--");
+    const mailOptions = {
+        from: '"vcp" <dep7901@gmail.com>',
+        to: creatorEmail as string,
+        subject: "Course completion certificate request",
+        html: `<div>
+        <h2 style="padding-bottom: 1.5rem">Course completion certificate</h2>
+        <h3>Purchase detail:</h3>
+        <div style="padding: 1rem">
+        <p>Id: ${courseDetail?.id}</p>
+        <p>Purchase Date: ${courseDetail?.createdAt}</p>
+        <p>Number: ${courseDetail?.endAt}</p>
+        </div>
+        <h3>Student detail:</h3>
+        <div style="padding: 1rem">
+        <p>Name: ${userDetail?.name}</p>
+        <p>Email: ${userDetail?.email}</p>
+        <p>Number: ${userDetail?.mobile}</p>
+        </div>
+        <h3>Course detail:</h3>
+        <div style="padding: 1rem">
+        <p>Title: ${courseDetail?.course.title}</p>
+        <p>Duration: ${courseDetail?.course.duration} Day</p>
+        </div>
         </div>`,
     };
 

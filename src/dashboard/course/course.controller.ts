@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";
 import prisma from "../../config/prisma";
 import { RequestWithUser } from "../../middlewares/auth.middleware";
-import { sendPublishRequest } from "../../services/email";
+import { sendCourseCompletionRequest, sendPublishRequest } from "../../services/email";
 
 interface Course {
     title: string;
@@ -38,7 +38,16 @@ export async function createCourse(req: RequestWithUser, res: Response, next: Ne
         // input validation
         if (!creatorId) return next(createHttpError(400, "creator-id not able to get."));
 
-        const courseCount = await prisma.course.count({ where: { creatorId } });
+        const courseLastOrder = await prisma.course.findFirst({
+            where: { creatorId },
+            select: { order: true },
+            orderBy: {
+                order: "desc",
+            },
+            take: 1,
+        });
+
+        const courseLastOrderCount = courseLastOrder?.order || 0;
 
         // Create the course in the database
         const newCourse = await prisma.course.create({
@@ -54,7 +63,7 @@ export async function createCourse(req: RequestWithUser, res: Response, next: Ne
                 duration,
                 creatorId,
                 status,
-                order: courseCount + 1,
+                order: courseLastOrderCount + 1,
             },
         });
 
@@ -240,6 +249,64 @@ export async function publishRequest(req: RequestWithUser, res: Response, next: 
             }
         } else {
             return next(createHttpError(400, "try again for public course."));
+        }
+    } catch (error: any) {
+        console.log(error.message);
+        return next(error);
+    }
+}
+
+export async function courseCompletionRequest(req: RequestWithUser, res: Response, next: NextFunction) {
+    try {
+        const { purchaseId } = req.body;
+        const creatorId = req?.user?.creatorId;
+
+        const verifiedPurchaseId = Number(purchaseId);
+
+        // input validation
+        if (!verifiedPurchaseId) return next(createHttpError(400, "please course-id provide in url."));
+
+        const creatorEmail = await prisma.creator.findUnique({
+            where: {
+                id: creatorId,
+            },
+            select: {
+                email: true,
+            },
+        });
+
+        console.log("creatorEmail", creatorEmail);
+
+        const courseDetail = await prisma.purchase.findUnique({
+            where: {
+                id: verifiedPurchaseId,
+            },
+            include: {
+                course: {
+                    select: {
+                        title: true,
+                        duration: true,
+                    },
+                },
+            },
+        });
+
+        console.log("courseDetail", courseDetail);
+        console.log("userId", courseDetail);
+
+        if (req?.user?.id === courseDetail?.userId && verifiedPurchaseId === courseDetail?.id) {
+            // send public request
+            const email = await sendCourseCompletionRequest(req?.user, courseDetail, creatorEmail?.email);
+
+            if (email) {
+                res.status(200).json({
+                    message: `Certificate request sended successfully, certificate sended on your whatsApp and email in 5 to 6 working hours.`,
+                });
+            } else {
+                return next(createHttpError(400, "some thing wait wrong: try again for Certificate request."));
+            }
+        } else {
+            return next(createHttpError(400, "try again for Certificate request."));
         }
     } catch (error: any) {
         console.log(error.message);
