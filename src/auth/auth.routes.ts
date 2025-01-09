@@ -4,6 +4,7 @@ import {
     getCreatorUsers,
     loginCreator,
     loginUser,
+    logoutUser,
     registerCreator,
     registerUser,
     sendForgotPasswordVerifyCreatorEmail,
@@ -20,12 +21,14 @@ import {
     userRegisterSchema,
     verifyEmailOtpSchema,
 } from "./auth.schema";
+import { authenticationMiddleware } from "../middlewares/auth.middleware";
 
 const authRouter = express.Router();
 
 // user auth
 authRouter.post("/user/register", validate(userRegisterSchema), registerUser);
 authRouter.post("/user/login", validate(loginSchema), loginUser);
+authRouter.post("/user/logout", authenticationMiddleware(["student"]), logoutUser);
 authRouter.get("/user/:creatorId", getCreatorUsers);
 // creator auth
 authRouter.post("/creator/register", validate(creatorRegisterSchema), registerCreator);
