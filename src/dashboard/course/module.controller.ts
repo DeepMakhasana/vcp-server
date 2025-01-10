@@ -13,7 +13,15 @@ export async function createModule(req: RequestWithUser, res: Response, next: Ne
     try {
         const { title, courseId } = req.body;
 
-        const moduleCount = await prisma.module.count({ where: { courseId } });
+        const moduleLastOrder = await prisma.module.findFirst({
+            where: { courseId },
+            select: { order: true },
+            orderBy: {
+                order: "desc",
+            },
+            take: 1,
+        });
+        const moduleCount = moduleLastOrder?.order || 0;
 
         // Create the course in the database
         const module = await prisma.module.create({

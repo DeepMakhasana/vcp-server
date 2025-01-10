@@ -5,6 +5,7 @@ import { hashPassword, verifyPassword } from "../utils/bcrypt";
 import { generateToken } from "../utils/jwt";
 import { generateOTP, sendVerificationEmail } from "../services/email";
 import { CreatorRegisterParameters, ILoginParameter, UserRegisterParameters } from "./types";
+import { RequestWithUser } from "../middlewares/auth.middleware";
 
 const isEmailVerified = async (email: string) => {
     return await prisma.verifiedEmail.findFirst({
@@ -69,6 +70,8 @@ export async function loginUser(req: Request, res: Response, next: NextFunction)
         });
         if (!userExists) return next(createHttpError(400, "User account doesn't exists"));
 
+        if (userExists.isLogin) return next(createHttpError(400, "User already login."));
+
         // password check
         const hashedPassword = userExists.password;
         const machPassword = await verifyPassword(password, hashedPassword);
@@ -81,6 +84,24 @@ export async function loginUser(req: Request, res: Response, next: NextFunction)
         // generate the token
         const token = generateToken(userExists, ["student"]);
         res.status(200).json({ message: "Login successfully", token });
+    } catch (error: any) {
+        console.log(error.message);
+        return next(createHttpError(400, "some thing wait wrong in user register."));
+    }
+}
+
+export async function logoutUser(req: RequestWithUser, res: Response, next: NextFunction) {
+    try {
+        const userId = req?.user?.id;
+        await prisma.user.update({
+            where: {
+                id: userId,
+            },
+            data: {
+                isLogin: false,
+            },
+        });
+        res.status(200).json({ message: "Logout successfully" });
     } catch (error: any) {
         console.log(error.message);
         return next(createHttpError(400, "some thing wait wrong in user register."));

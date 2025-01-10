@@ -1,5 +1,6 @@
 import express from "express";
 import {
+    courseCompletionRequest,
     createCourse,
     deleteCourse,
     getAllOwnCourses,
@@ -53,6 +54,8 @@ courseRouter.delete("/task/:taskId", authenticationMiddleware(["creator"]), dele
 
 // public request
 courseRouter.post("/publish", authenticationMiddleware(["creator"]), publishRequest);
+// certificate request
+courseRouter.post("/certificate", authenticationMiddleware(["student"]), courseCompletionRequest);
 
 // courses
 courseRouter.get("/slug/:slug", authenticationMiddleware(["student"]), validate(slugSchema, "params"), getCourseBySlug);
