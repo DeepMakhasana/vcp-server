@@ -14,6 +14,7 @@ export async function getAllCreatorCourses(req: Request, res: Response, next: Ne
         const courses = await prisma.course.findMany({
             where: {
                 creatorId,
+                status: true,
             },
             select: {
                 id: true,

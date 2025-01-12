@@ -1,6 +1,7 @@
 import express from "express";
 import {
     courseCompletionRequest,
+    coursePublishStatusChange,
     createCourse,
     deleteCourse,
     getAllOwnCourses,
@@ -23,7 +24,14 @@ import {
 } from "./lesson.controller";
 import { createTasks, deleteLessonTask, getLessonTasks } from "./task.controller";
 import { validate } from "../../middlewares/validator.middleware";
-import { courseValidationSchema, lessonSchema, moduleSchema, orderSchema, slugSchema } from "./course.schema";
+import {
+    courseValidationSchema,
+    lessonSchema,
+    moduleSchema,
+    orderSchema,
+    coursePublishStatusChangeSchema,
+    slugSchema,
+} from "./course.schema";
 
 const courseRouter = express.Router();
 
@@ -52,7 +60,14 @@ courseRouter.post("/tasks", authenticationMiddleware(["creator"]), createTasks);
 courseRouter.get("/tasks/:lessonId", authenticationMiddleware(["creator"]), getLessonTasks);
 courseRouter.delete("/task/:taskId", authenticationMiddleware(["creator"]), deleteLessonTask);
 
-// public request
+// change publish status
+courseRouter.put(
+    "/status",
+    authenticationMiddleware(["creator"]),
+    validate(coursePublishStatusChangeSchema),
+    coursePublishStatusChange
+);
+// publish request
 courseRouter.post("/publish", authenticationMiddleware(["creator"]), publishRequest);
 // certificate request
 courseRouter.post("/certificate", authenticationMiddleware(["student"]), courseCompletionRequest);

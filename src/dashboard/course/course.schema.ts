@@ -103,3 +103,16 @@ export const orderSchema = Joi.object({
             "any.required": "Both id and order are required.",
         }),
 });
+
+export const coursePublishStatusChangeSchema = Joi.object({
+    courseId: Joi.number().integer().positive().required().messages({
+        "number.base": "Course ID must be a number.",
+        "number.integer": "Course ID must be an integer.",
+        "number.positive": "Course ID must be a positive number.",
+        "any.required": "Course ID is required.",
+    }),
+    status: Joi.boolean().required().messages({
+        "boolean.base": "status must be a boolean value.",
+        "any.required": "status is required.",
+    }),
+});
