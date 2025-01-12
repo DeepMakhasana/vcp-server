@@ -313,3 +313,27 @@ export async function courseCompletionRequest(req: RequestWithUser, res: Respons
         return next(error);
     }
 }
+
+export async function coursePublishStatusChange(req: RequestWithUser, res: Response, next: NextFunction) {
+    try {
+        const { status, courseId } = req.body;
+
+        const id = Number(courseId);
+        // input validation
+        if (!id) return next(createHttpError(400, "please course-id provide in url."));
+
+        const updateStatus = await prisma.course.update({
+            where: {
+                id,
+            },
+            data: {
+                status,
+            },
+        });
+
+        res.status(200).json({ message: "Course visibility status updated successfully.", course: updateStatus });
+    } catch (error: any) {
+        console.log(`Error in course status change: ${error.message}`);
+        return next(error);
+    }
+}
