@@ -209,9 +209,7 @@ export async function getCourseBySlug(req: Request, res: Response, next: NextFun
     try {
         const { slug } = req.params;
 
-        console.log(slug);
-
-        // Get all the courses of creator in the database
+        // Get all the courses by slug
         const course = await prisma.course.findUnique({
             where: {
                 slug,
