@@ -73,7 +73,7 @@ courseRouter.post("/publish", authenticationMiddleware(["creator"]), publishRequ
 courseRouter.post("/certificate", authenticationMiddleware(["student"]), courseCompletionRequest);
 
 // courses
-courseRouter.get("/slug/:slug", authenticationMiddleware(["student"]), validate(slugSchema, "params"), getCourseBySlug);
+courseRouter.get("/slug/:slug", validate(slugSchema, "params"), getCourseBySlug);
 courseRouter.get("/own", authenticationMiddleware(["creator"]), getAllOwnCourses);
 
 courseRouter.get("/:id", authenticationMiddleware(["creator"]), getCourse);
