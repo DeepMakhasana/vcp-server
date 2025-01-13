@@ -77,8 +77,7 @@ export async function createCourse(req: RequestWithUser, res: Response, next: Ne
 
 export async function updateCourse(req: RequestWithUser, res: Response, next: NextFunction) {
     try {
-        const { title, description, price, image, highlights, outcomes, prerequisites, duration, status } =
-            req.body as Course;
+        const { title, description, price, image, highlights, outcomes, prerequisites, duration } = req.body;
         const { id } = req.params;
 
         const courseId = Number(id);
@@ -95,11 +94,10 @@ export async function updateCourse(req: RequestWithUser, res: Response, next: Ne
                 description,
                 price,
                 duration,
-                image,
+                image: `${image}?updateAt=${new Date().getTime()}`,
                 highlights,
                 outcomes,
                 prerequisites,
-                status,
             },
         });
 
