@@ -257,10 +257,8 @@ export async function courseCompletionRequest(req: RequestWithUser, res: Respons
         const { purchaseId } = req.body;
         const creatorId = req?.user?.creatorId;
 
-        const verifiedPurchaseId = Number(purchaseId);
-
         // input validation
-        if (!verifiedPurchaseId) return next(createHttpError(400, "please course-id provide in url."));
+        if (!purchaseId) return next(createHttpError(400, "please course-id provide in url."));
 
         const creatorEmail = await prisma.creator.findUnique({
             where: {
@@ -275,7 +273,7 @@ export async function courseCompletionRequest(req: RequestWithUser, res: Respons
 
         const courseDetail = await prisma.purchase.findUnique({
             where: {
-                id: verifiedPurchaseId,
+                order_id: purchaseId,
             },
             include: {
                 course: {
@@ -290,7 +288,7 @@ export async function courseCompletionRequest(req: RequestWithUser, res: Respons
         console.log("courseDetail", courseDetail);
         console.log("userId", courseDetail);
 
-        if (req?.user?.id === courseDetail?.userId && verifiedPurchaseId === courseDetail?.id) {
+        if (req?.user?.id === courseDetail?.userId && purchaseId === courseDetail?.order_id) {
             // send public request
             const email = await sendCourseCompletionRequest(req?.user, courseDetail, creatorEmail?.email);
 

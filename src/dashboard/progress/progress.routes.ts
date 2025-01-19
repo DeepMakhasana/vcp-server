@@ -7,13 +7,13 @@ import { createProgress } from "./progress.controller";
 const progressRouter = express.Router();
 
 const progressCreateSchema = Joi.object({
-    purchaseId: Joi.number().integer().positive().min(1).required().messages({
-        "number.base": "Purchase ID must be a number.",
-        "number.integer": "Purchase ID must be an integer.",
-        "number.positive": "Purchase ID must be a positive number.",
-        "number.min": "Purchase ID must be greater than zero.",
-        "any.required": "Purchase ID is required.",
-    }),
+    purchaseId: Joi.string()
+        .pattern(/^order_[a-zA-Z0-9]+$/)
+        .required()
+        .messages({
+            "string.empty": "Razorpay order ID is required.",
+            "string.pattern.base": "Razorpay order ID must start with 'order_' followed by alphanumeric characters.",
+        }),
     lessonId: Joi.number().integer().positive().min(1).required().messages({
         "number.base": "Lesson ID must be a number.",
         "number.integer": "Lesson ID must be an integer.",

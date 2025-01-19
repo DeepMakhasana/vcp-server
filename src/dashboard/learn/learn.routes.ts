@@ -12,13 +12,13 @@ import {
 const learnRouter = express.Router();
 
 const learnCreateSchema = Joi.object({
-    purchaseId: Joi.number().integer().positive().min(1).required().messages({
-        "number.base": "Purchase ID must be a number.",
-        "number.integer": "Purchase ID must be an integer.",
-        "number.positive": "Purchase ID must be a positive number.",
-        "number.min": "Purchase ID must be greater than zero.",
-        "any.required": "Purchase ID is required.",
-    }),
+    purchaseId: Joi.string()
+        .pattern(/^order_[a-zA-Z0-9]+$/)
+        .required()
+        .messages({
+            "string.empty": "Razorpay order ID is required.",
+            "string.pattern.base": "Razorpay order ID must start with 'order_' followed by alphanumeric characters.",
+        }),
     lessonId: Joi.number().integer().positive().min(1).required().messages({
         "number.base": "Lesson ID must be a number.",
         "number.integer": "Lesson ID must be an integer.",
@@ -29,13 +29,13 @@ const learnCreateSchema = Joi.object({
 });
 
 const learnProgressSchema = Joi.object({
-    purchaseId: Joi.number().integer().positive().min(1).required().messages({
-        "number.base": "Purchase ID must be a number.",
-        "number.integer": "Purchase ID must be an integer.",
-        "number.positive": "Purchase ID must be a positive number.",
-        "number.min": "Purchase ID must be greater than zero.",
-        "any.required": "Purchase ID is required.",
-    }),
+    purchaseId: Joi.string()
+        .pattern(/^order_[a-zA-Z0-9]+$/)
+        .required()
+        .messages({
+            "string.empty": "Razorpay order ID is required.",
+            "string.pattern.base": "Razorpay order ID must start with 'order_' followed by alphanumeric characters.",
+        }),
     courseId: Joi.number().integer().positive().min(1).required().messages({
         "number.base": "Course ID must be a number.",
         "number.integer": "Course ID must be an integer.",
@@ -45,7 +45,32 @@ const learnProgressSchema = Joi.object({
     }),
 });
 
-learnRouter.get("/:slug/:purchaseId", authenticationMiddleware(["student", "creator"]), getLearnCourseBySlug);
+export const courseBySlugSchema = Joi.object({
+    slug: Joi.string()
+        .pattern(/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/)
+        .max(100) // Match the max length in your Prisma schema
+        .required()
+        .messages({
+            "string.pattern.base":
+                "Slug must contain only lowercase letters, numbers, hyphens, or underscores, and cannot start or end with a hyphen/underscore.",
+            "string.max": "Slug cannot exceed 100 characters.",
+            "string.empty": "Slug is required.",
+        }),
+    purchaseId: Joi.string()
+        .pattern(/^order_[a-zA-Z0-9]+$/)
+        .required()
+        .messages({
+            "string.empty": "Razorpay order ID is required.",
+            "string.pattern.base": "Razorpay order ID must start with 'order_' followed by alphanumeric characters.",
+        }),
+});
+
+learnRouter.get(
+    "/:slug/:purchaseId",
+    authenticationMiddleware(["student", "creator"]),
+    validate(courseBySlugSchema, "params"),
+    getLearnCourseBySlug
+);
 
 learnRouter.get(
     "/video/:purchaseId/:lessonId",
