@@ -20,18 +20,16 @@ export async function getLearnCourseBySlug(req: RequestWithUser, res: Response, 
 
         console.log("execute - learn course");
 
-        const verifyPurchaseId = Number(purchaseId);
         // input validation
-        if (!purchaseId || !verifyPurchaseId)
-            return next(createHttpError(400, "Enter purchase-id in api url correctly."));
+        if (!purchaseId) return next(createHttpError(400, "Enter purchase-id in api url correctly."));
 
         const purchase = await prisma.purchase.findUnique({
             where: {
-                id: verifyPurchaseId,
+                order_id: purchaseId,
             },
         });
 
-        if (purchase?.userId != req.user?.id) {
+        if (purchase?.userId != req.user?.id || purchase?.status != "SUCCESS") {
             return next(createHttpError(403, "Unauthorized access."));
         }
 
@@ -66,7 +64,7 @@ export async function getLearnCourseBySlug(req: RequestWithUser, res: Response, 
                                 },
                                 progresses: {
                                     where: {
-                                        purchaseId: Number(verifyPurchaseId),
+                                        purchaseId,
                                     },
                                 },
                             },
@@ -88,15 +86,15 @@ export async function createVideoPresignedUrl(req: RequestWithUser, res: Respons
         const { purchaseId, lessonId } = req.params;
         console.log("execute - video");
 
-        const verifyPurchaseId = Number(purchaseId);
+        // const verifyPurchaseId = Number(purchaseId);
         const verifyLessonId = Number(lessonId);
         // input validation
-        if (!verifyPurchaseId || !verifyLessonId) return next(createHttpError(400, "enter valid id."));
+        if (!purchaseId || !verifyLessonId) return next(createHttpError(400, "enter valid id."));
 
         // Fetch purchase and validate ownership
         const purchase = await prisma.purchase.findUnique({
             where: {
-                id: verifyPurchaseId,
+                order_id: purchaseId,
             },
             select: {
                 userId: true,
@@ -157,15 +155,15 @@ export async function createTaskPresignedUrl(req: RequestWithUser, res: Response
 
         console.log("execute - task");
 
-        const verifyPurchaseId = Number(purchaseId);
+        // const verifyPurchaseId = Number(purchaseId);
         const verifyLessonId = Number(lessonId);
         // input validation
-        if (!verifyPurchaseId || !verifyLessonId) return next(createHttpError(400, "enter valid id."));
+        if (!purchaseId || !verifyLessonId) return next(createHttpError(400, "enter valid id."));
 
         // Fetch purchase and validate ownership
         const purchase = await prisma.purchase.findUnique({
             where: {
-                id: verifyPurchaseId,
+                order_id: purchaseId,
             },
             select: {
                 userId: true,
@@ -212,10 +210,10 @@ export async function courseProgress(req: RequestWithUser, res: Response, next: 
 
         console.log("execute - progress percentage");
 
-        const verifyPurchaseId = Number(purchaseId);
+        // const verifyPurchaseId = Number(purchaseId);
         const verifyCourseId = Number(courseId);
         // input validation
-        if (!verifyPurchaseId || !verifyCourseId) return next(createHttpError(400, "enter valid id."));
+        if (!purchaseId || !verifyCourseId) return next(createHttpError(400, "enter valid id."));
 
         // Count total lessons in the course
         const totalLessons = await prisma.lesson.count({
@@ -229,7 +227,7 @@ export async function courseProgress(req: RequestWithUser, res: Response, next: 
         // Count completed lessons for the purchase
         const completedLessons = await prisma.progress.count({
             where: {
-                purchaseId: verifyPurchaseId,
+                purchaseId: purchaseId,
             },
         });
 

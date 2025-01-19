@@ -16,6 +16,8 @@ const _config = {
     awsRegion: process.env.AWS_REGION,
     snsAccessKey: process.env.AWS_SNS_ACCESS_KEY,
     snsSecretAccessKey: process.env.AWS_SNS_SECRET_ACCESS_KEY,
+    razorpayKeyId: process.env.RAZORPAY_KEY_ID as string,
+    razorpayKeySecret: process.env.RAZORPAY_SECRET as string,
 };
 
 const config = Object.freeze(_config);

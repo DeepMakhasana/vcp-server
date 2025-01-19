@@ -2,7 +2,7 @@ import express from "express";
 import { validate } from "../middlewares/validator.middleware";
 import Joi from "joi";
 import { authenticationMiddleware } from "../middlewares/auth.middleware";
-import { getUserPurchaseCourse, purchaseCourse } from "./purchase.controller";
+import { getUserPurchaseCourse, purchaseOrder, purchaseOrderVerify } from "./purchase.controller";
 const purchaseRouter = express.Router();
 
 const purchaseSchema = Joi.object({
@@ -32,7 +32,12 @@ const purchaseSchema = Joi.object({
     }),
 });
 
-purchaseRouter.post("/", authenticationMiddleware(["student"]), validate(purchaseSchema), purchaseCourse);
+// ROUTE 1 : Create Order Api Using POST Method http://localhost:8000/api/purchase/order
+purchaseRouter.post("/order", authenticationMiddleware(["student"]), validate(purchaseSchema), purchaseOrder);
+
+// ROUTE 2 : Create Verify Api Using POST Method http://localhost:8000/api/purchase/verify
+purchaseRouter.post("/verify", authenticationMiddleware(["student"]), purchaseOrderVerify);
+
 purchaseRouter.get("/", authenticationMiddleware(["student"]), getUserPurchaseCourse);
 
 export default purchaseRouter;

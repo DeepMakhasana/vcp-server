@@ -66,7 +66,7 @@ export const sendCourseCompletionRequest = async (
         <h2 style="padding-bottom: 1.5rem">Course completion certificate</h2>
         <h3>Purchase detail:</h3>
         <div style="padding: 1rem">
-        <p>Id: ${courseDetail?.id}</p>
+        <p>Id: ${courseDetail?.order_id}</p>
         <p>Purchase Date: ${courseDetail?.createdAt}</p>
         <p>Number: ${courseDetail?.endAt}</p>
         </div>

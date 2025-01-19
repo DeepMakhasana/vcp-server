@@ -87,10 +87,10 @@ model Task {
 
 model Progress {
   id         Int      @id @default(autoincrement())
-  purchaseId Int
+  purchaseId String
   lessonId   Int
   status     Boolean  @default(true)
-  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  purchase   Purchase @relation(fields: [purchaseId], references: [order_id], onDelete: Cascade)
   lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 }
 
@@ -153,13 +153,17 @@ model Review {
 }
 
 model Purchase {
-  id         Int        @id @default(autoincrement())
+  order_id   String     @id @unique
   courseId   Int
   userId     Int
   price      Int
+  payment_id String?
+  signature  String?
+  endAt      DateTime?
+  status     String     @default("PENDING") // Status (e.g., PENDING, SUCCESS, FAILED)
   course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt  DateTime   @default(now())
-  endAt      DateTime?
+  updatedAt  DateTime   @updatedAt
   progresses Progress[]
 }
