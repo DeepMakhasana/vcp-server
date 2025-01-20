@@ -32,6 +32,7 @@ export async function getUserPurchaseCourse(req: RequestWithUser, res: Response,
         const courses = await prisma.purchase.findMany({
             where: {
                 userId: Number(userId),
+                status: "SUCCESS",
             },
             include: {
                 course: {
@@ -154,5 +155,184 @@ export async function purchaseOrderVerify(req: RequestWithUser, res: Response, n
     } catch (error: any) {
         console.log(error.message);
         return next(createHttpError(400, "some thing wait wrong: try again for course purchase."));
+    }
+}
+
+// --------------------------------
+function getCurrentWeekStartEnd() {
+    const today = new Date();
+
+    // Get the current day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+    const dayOfWeek = today.getDay();
+
+    const mondayDiff = today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1); // Calculate Monday
+    const sundayDiff = mondayDiff + 6;
+
+    const startOfWeek = new Date(today.setDate(mondayDiff));
+    const endOfWeek = new Date(today.setDate(sundayDiff));
+
+    return {
+        start: startOfWeek,
+        end: endOfWeek,
+    };
+}
+
+function getCurrentMonthStartEnd() {
+    const today = new Date();
+
+    // Start of the month: Set date to the 1st
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 2);
+
+    // End of the month: Set date to the last day of the month
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+
+    return {
+        start: startOfMonth,
+        end: endOfMonth,
+    };
+}
+
+function getCurrentYearStartEnd() {
+    const today = new Date();
+
+    // Start of the year: January 1st
+    const startOfYear = new Date(today.getFullYear(), 0, 2);
+
+    // End of the year: December 31st
+    const endOfYear = new Date(today.getFullYear(), 11, 32);
+
+    return {
+        start: startOfYear,
+        end: endOfYear,
+    };
+}
+
+export async function purchaseOrdersDetails(req: RequestWithUser, res: Response, next: NextFunction) {
+    try {
+        const { range } = req.params;
+        const creatorId = req.user?.id;
+
+        let startDate;
+        let endDate;
+        switch (range) {
+            case "week":
+                const weekDate = getCurrentWeekStartEnd();
+                startDate = weekDate.start;
+                endDate = weekDate.end;
+                break;
+            case "month":
+                const monthDate = getCurrentMonthStartEnd();
+                startDate = monthDate.start;
+                endDate = monthDate.end;
+                break;
+            case "year":
+                const yearDate = getCurrentYearStartEnd();
+                startDate = yearDate.start;
+                endDate = yearDate.end;
+                break;
+            default:
+                return next(createHttpError(400, "please provide range like, week, month or year in query params."));
+        }
+
+        const getOwnCoursesId = await prisma.course.findMany({
+            where: {
+                creatorId,
+            },
+            select: {
+                id: true,
+            },
+        });
+
+        // Extract course IDs
+        const courseIds = getOwnCoursesId.map((course) => course.id);
+
+        const purchaseOrders = await prisma.purchase.findMany({
+            where: {
+                courseId: {
+                    in: courseIds,
+                },
+                createdAt: { gte: startDate, lte: endDate },
+            },
+            include: {
+                user: {
+                    select: {
+                        name: true,
+                        email: true,
+                        mobile: true,
+                    },
+                },
+                course: {
+                    select: {
+                        title: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+        });
+
+        res.status(200).json(purchaseOrders);
+    } catch (error: any) {
+        console.log(error.message);
+        return next(createHttpError(400, "some thing wait wrong: try again for purchased course detail."));
+    }
+}
+
+export async function totalAmountPurchaseOrders(req: RequestWithUser, res: Response, next: NextFunction) {
+    try {
+        const { range } = req.params;
+        const creatorId = req.user?.id;
+
+        let startDate;
+        let endDate;
+        switch (range) {
+            case "week":
+                const weekDate = getCurrentWeekStartEnd();
+                startDate = weekDate.start;
+                endDate = weekDate.end;
+                break;
+            case "month":
+                const monthDate = getCurrentMonthStartEnd();
+                startDate = monthDate.start;
+                endDate = monthDate.end;
+                break;
+            case "year":
+                const yearDate = getCurrentYearStartEnd();
+                startDate = yearDate.start;
+                endDate = yearDate.end;
+                break;
+            default:
+                return next(createHttpError(400, "please provide range like, week, month or year in query params."));
+        }
+
+        const getOwnCoursesId = await prisma.course.findMany({
+            where: {
+                creatorId,
+            },
+            select: {
+                id: true,
+            },
+        });
+
+        // Extract course IDs
+        const courseIds = getOwnCoursesId.map((course) => course.id);
+
+        const totalAmountOrders = await prisma.purchase.aggregate({
+            _sum: {
+                price: true,
+            },
+            where: {
+                courseId: {
+                    in: courseIds,
+                },
+                createdAt: { gte: startDate, lte: endDate },
+            },
+        });
+
+        res.status(200).json(totalAmountOrders);
+    } catch (error: any) {
+        console.log(error.message);
+        return next(createHttpError(400, "some thing wait wrong: try again for purchased course detail."));
     }
 }
