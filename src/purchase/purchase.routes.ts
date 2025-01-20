@@ -2,7 +2,13 @@ import express from "express";
 import { validate } from "../middlewares/validator.middleware";
 import Joi from "joi";
 import { authenticationMiddleware } from "../middlewares/auth.middleware";
-import { getUserPurchaseCourse, purchaseOrder, purchaseOrderVerify } from "./purchase.controller";
+import {
+    getUserPurchaseCourse,
+    purchaseOrder,
+    purchaseOrdersDetails,
+    purchaseOrderVerify,
+    totalAmountPurchaseOrders,
+} from "./purchase.controller";
 const purchaseRouter = express.Router();
 
 const purchaseSchema = Joi.object({
@@ -39,5 +45,8 @@ purchaseRouter.post("/order", authenticationMiddleware(["student"]), validate(pu
 purchaseRouter.post("/verify", authenticationMiddleware(["student"]), purchaseOrderVerify);
 
 purchaseRouter.get("/", authenticationMiddleware(["student"]), getUserPurchaseCourse);
+
+purchaseRouter.get("/orders/:range", authenticationMiddleware(["creator"]), purchaseOrdersDetails);
+purchaseRouter.get("/orders/total/:range", authenticationMiddleware(["creator"]), totalAmountPurchaseOrders);
 
 export default purchaseRouter;
