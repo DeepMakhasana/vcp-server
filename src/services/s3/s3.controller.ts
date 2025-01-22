@@ -82,6 +82,27 @@ export async function putObjectFromS3(req: RequestWithUser, res: Response, next:
     }
 }
 
+export async function putObjectPresignedUrl(req: RequestWithUser, res: Response, next: NextFunction) {
+    try {
+        const { fileName, fileType, bucket } = req.body;
+        // input validation
+        if (!fileName || !fileType) return next(createHttpError(400, "Enter file name and type correctly."));
+
+        const command = new PutObjectCommand({
+            Bucket: bucket,
+            Key: fileName,
+            ContentType: fileType,
+        });
+
+        const putObjetUrl = await getSignedUrl(s3Client, command);
+
+        res.status(200).json({ url: putObjetUrl });
+    } catch (error) {
+        console.log(error);
+        return next(createHttpError(400, "some thing wait wrong in s3 putObjectPresignedUrl presigned url."));
+    }
+}
+
 export async function getObjectFromS3(req: RequestWithUser, res: Response, next: NextFunction) {
     try {
         const { key, bucket } = req.body;
